@@ -7,9 +7,10 @@ import fs from "node:fs";
 import path from "node:path";
 import { DATA_DIR, TABLES } from "./lib.js";
 import { registry } from "../src/renderer/src/core/effects/index.js";
-import { DERIVED, PERMISSIONS, LISTS } from "../src/renderer/src/core/timeline/derive.js";
-import { RUN_STEP_NAMES, BATTLE_STEPS } from "../src/renderer/src/core/timeline/steps.js";
-import { STANDARD } from "../src/renderer/src/core/timeline/standard.js";
+import { DERIVED } from "../src/renderer/src/core/derived/index.js";
+import { PERMISSION_NAMES } from "../src/renderer/src/core/permissions/index.js";
+import { LIST_NAMES } from "../src/renderer/src/core/lists/index.js";
+import { STEPS } from "../src/renderer/src/core/steps/index.js";
 
 const FAMILY_DESC = {
   status: "statuses.effect (省略時 key)。kind=common|unique|buff",
@@ -84,34 +85,32 @@ export function renderSchema() {
   }
   lines.push("## ステップと標準処理の order");
   lines.push("");
-  lines.push("| ステップ | 標準処理 (order) | 次 |");
-  lines.push("|---|---|---|");
-  for (const step of RUN_STEP_NAMES)
-    lines.push(`| \`${step}\` | ${(STANDARD[step] || []).map((s) => `${s.name} (${s.order})`).join(", ") || "-"} | (コマンド内で同期) |`);
-  for (const [step, def] of Object.entries(BATTLE_STEPS)) {
-    const kind = def.input ? "入力待ち" : def.terminal ? "終端" : def.settle ? "settle" : "";
-    lines.push(
-      `| \`${step}\` ${kind ? `(${kind})` : ""} | ${(STANDARD[step] || []).map((s) => `${s.name} (${s.order})`).join(", ") || "-"} | 03 の表 |`,
-    );
+  lines.push("| ステップ | 種別 | 標準処理 (order) | 典型的な登録者 |");
+  lines.push("|---|---|---|---|");
+  for (const step of STEPS) {
+    const kind =
+      step.scope === "run"
+        ? "コマンド内で同期"
+        : step.input
+          ? "battle: 入力待ち"
+          : step.terminal
+            ? "battle: 終端"
+            : step.settle
+              ? "battle: settle"
+              : "battle";
+    const standard = step.standard.map((s) => `${s.name} (${s.order})`).join(", ") || "-";
+    lines.push(`| \`${step.name}\` | ${kind} | ${standard} | ${step.registrants || "-"} |`);
   }
   lines.push("");
   lines.push("## 派生値 / 許可 / 派生リスト");
   lines.push("");
   lines.push(
-    `- 派生値: ${Object.keys(DERIVED)
-      .map((k) => `\`${k}\` (${DERIVED[k].kind})`)
+    `- 派生値: ${Object.values(DERIVED)
+      .map((d) => `\`${d.name}\` (${d.kind})`)
       .join(", ")}`,
   );
-  lines.push(
-    `- 許可: ${Object.keys(PERMISSIONS)
-      .map((k) => `\`${k}\``)
-      .join(", ")}`,
-  );
-  lines.push(
-    `- 派生リスト: ${Object.keys(LISTS)
-      .map((k) => `\`${k}\``)
-      .join(", ")}`,
-  );
+  lines.push(`- 許可: ${PERMISSION_NAMES.map((k) => `\`${k}\``).join(", ")}`);
+  lines.push(`- 派生リスト: ${LIST_NAMES.map((k) => `\`${k}\``).join(", ")}`);
   lines.push("");
   lines.push("## テストデータの約束");
   lines.push("");

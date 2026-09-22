@@ -1,6 +1,6 @@
 // 幕間のショップ (02 shop)。抽選規則はプロト踏襲の簡易版 (M1)。詳細な枠配分は M2 で 05 の config に寄せる
 import { master } from "../master/index.js";
-import { list } from "../timeline/derive.js";
+import { list } from "../lists/index.js";
 import { defOf } from "./entity.js";
 
 export function makeShop(ctx, { rerolls = 0 } = {}) {

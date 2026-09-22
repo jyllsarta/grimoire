@@ -45,11 +45,14 @@ grimoire/
         │   ├ state/          schema.js (初期状態・検証・不変条件), phase.js (フェーズ導出)
         │   ├ rng.js, uid.js
         │   ├ master/         tables.js (列定義。tools も同じ定義を読む), index.js (アクセサ), validate.js
-        │   ├ timeline/       steps.js (ステップ一覧と遷移), standard.js (標準処理と order), bus.js (フック解決), derive.js (派生値)
-        │   ├ effects/        index.js (明示順レジストリ) + statuses/ costumes/ bookRules/ passives/ relics/ star/ items/ abilities/ enemyActions/ eventEffects/
-        │   ├ commands/       1 コマンド 1 ファイル + index.js (dispatch とフェーズ判定)。advance.js がステップマシンを 1 つ進める
-        │   ├ domain/         board.js inventory.js battle.js chapter.js shop.js star.js player.js wallet.js (状態を動かす動詞)
-        │   ├ queries/        UI が読む問い合わせ (内訳、許可、山札の公開情報、リチャージ条件 ...)
+        │   ├ steps/          1 ステップ 1 ファイル (run/ chapter/ action/ damage/ battle/)。各ファイルが標準処理 (order 付き) と「次のステップ」を持つ。index.js は 03 の表の並びで登録するだけ、bus.js がフック解決
+        │   ├ derived/        1 派生値 1 ファイル (max_hp.js attack_power.js turn_order.js ...)。index.js は一覧と stage の計算規則
+        │   ├ permissions/    1 許可 1 ファイル (can_act.js ...)。lists/ も同じ (start_entities.js chapter_panel_specs.js shop_candidates.js)
+        │   ├ verbs/          ctx の動詞 (damage.js heal.js status.js inventory.js costume.js memo.js)。ctx.js は束ねるだけ
+        │   ├ effects/        index.js (明示順レジストリ) + family ごとのディレクトリ (statuses/ costumes/ bookRules/ passives/ relics/ star/ items/ abilities/ enemyActions/ eventEffects/)。各 family の sources.js が「いま state 上にいる自分たち」を列挙し、effects/sources.js が連結する
+        │   ├ commands/       ドメインごとのファイル (chapter.js battle.js inventory.js intermission.js debug.js) + index.js (dispatch とフェーズ判定)。advance.js がステップマシンを 1 つ進める
+        │   ├ domain/         board.js inventory.js battle.js chapter.js shop.js entity.js placeholder.js (状態を動かす関数。ステップとコマンドが呼ぶ)
+        │   ├ queries/        UI が読む問い合わせ (内訳、許可、山札の公開情報、処理順、リチャージ条件 ...)
         │   ├ outbox.js       一発物 (演出・音) の通知。購読方式
         │   └ run.js          newRun / serialize / deserialize / migrate
         ├ masterdata/         生成物。data/*.csv から tools/import.js が profile 別に生成し、コミットする
@@ -58,6 +61,8 @@ grimoire/
 ```
 
 依存の向き: `app → core`、`core → masterdata`、`platform ← app`。core が app や platform を参照したら lint で落とす。
+
+core の中のファイル分割の方針 (xqueens の `phase_*.js` と同じ): **興味の単位 = ファイル**。ステップ・派生値・許可・動詞・効果はそれぞれ 1 つ 1 ファイルにし、順番や一覧が要るところ (steps/index.js、effects/index.js、derived/index.js) は登録だけを書いて実装を置かない。03 の「処理順が 1 か所で見える」は、この一覧と `queries/resolvedOrder` (インスペクタの処理順ビューア) で満たす。
 
 ## レイヤーの役割
 

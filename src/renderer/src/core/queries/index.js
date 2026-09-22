@@ -4,18 +4,19 @@
 
 import { createCtx } from "../ctx.js";
 import { phaseOf } from "../state/phase.js";
-import { derive, deriveWithBreakdown, permission, DERIVED, PERMISSIONS } from "../timeline/derive.js";
-import { resolveHandlers } from "../timeline/bus.js";
-import { ALL_STEP_NAMES } from "../timeline/steps.js";
+import { derive, deriveWithBreakdown, DERIVED_NAMES } from "../derived/index.js";
+import { permission, PERMISSION_NAMES } from "../permissions/index.js";
+import { resolveHandlers } from "../steps/bus.js";
+import { ALL_STEP_NAMES } from "../steps/index.js";
 import { chapterSequence, currentChapterId, currentChapter } from "../domain/chapter.js";
 import { panelAt, currentRoutine, currentActions, deckSummary } from "../domain/board.js";
-import { battleEnemy } from "../timeline/sources.js";
+import { battleEnemy } from "../domain/battle.js";
+import { adjacent } from "../domain/inventory.js";
 import { canDispatch, COMMAND_NAMES } from "../commands/index.js";
 import { master } from "../master/index.js";
 
-export { phaseOf, chapterSequence, currentChapterId, currentChapter, panelAt, currentRoutine, currentActions, deckSummary, battleEnemy };
-export const DERIVED_NAMES = Object.keys(DERIVED);
-export const PERMISSION_NAMES = Object.keys(PERMISSIONS);
+export { phaseOf, chapterSequence, currentChapterId, currentChapter, panelAt, currentRoutine, currentActions, deckSummary, battleEnemy, adjacent };
+export { DERIVED_NAMES, PERMISSION_NAMES };
 export const STEP_NAMES = ALL_STEP_NAMES;
 
 export function q(state) {

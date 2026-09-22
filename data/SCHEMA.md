@@ -147,46 +147,46 @@
 
 ## ステップと標準処理の order
 
-| ステップ | 標準処理 (order) | 次 |
-|---|---|---|
-| `run.start` | initialize (500) | (コマンド内で同期) |
-| `chapter.build` | buildBoard (500) | (コマンド内で同期) |
-| `chapter.start` | - | (コマンド内で同期) |
-| `panel.taken` | - | (コマンド内で同期) |
-| `panel.dumped` | - | (コマンド内で同期) |
-| `entity.gained` | - | (コマンド内で同期) |
-| `entity.spent` | recharge (500) | (コマンド内で同期) |
-| `event.resolved` | harshness (500) | (コマンド内で同期) |
-| `chapter.clear` | rewards (500), reset (600), decideNext (700) | (コマンド内で同期) |
-| `intermission.enter` | - | (コマンド内で同期) |
-| `intermission.leave` | - | (コマンド内で同期) |
-| `action.item` | - | (コマンド内で同期) |
-| `action.ability` | count (500) | (コマンド内で同期) |
-| `action.equipToggle` | - | (コマンド内で同期) |
-| `player.damaged` | - | (コマンド内で同期) |
-| `enemy.damaged` | - | (コマンド内で同期) |
-| `run.end` | - | (コマンド内で同期) |
-| `battle.start`  | create (500) | 03 の表 |
-| `turn.start`  | fireDelayed (500) | 03 の表 |
-| `select` (入力待ち) | - | 03 の表 |
-| `turn.command`  | command (500) | 03 の表 |
-| `player.tick` (settle) | statusTick (500) | 03 の表 |
-| `turn.order`  | order (500) | 03 の表 |
-| `player.strike.before`  | - | 03 の表 |
-| `player.strike`  | strike (500) | 03 の表 |
-| `player.strike.after`  | weaponWear (500) | 03 の表 |
-| `player.act.skipped`  | sleepSkip (500) | 03 の表 |
-| `player.act.end` (settle) | statusDecay (500), buffsTick (600) | 03 の表 |
-| `enemy.act.begin` (settle) | blockReset (500), enemyStatusTick (600) | 03 の表 |
-| `enemy.stunned` (settle) | unstun (500), enemyBuffsTick (600), enemyStatusDecay (650), routineAdvance (700) | 03 の表 |
-| `enemy.action`  | resolve (500) | 03 の表 |
-| `enemy.act.after` (settle) | armorWear (200), parry (300), enemyBuffsTick (500), enemyStatusDecay (550), routineAdvance (600) | 03 の表 |
-| `turn.end`  | advance (500), recharge (600) | 03 の表 |
-| `flee.command`  | command (500) | 03 の表 |
-| `flee.done`  | done (500) | 03 の表 |
-| `battle.victory`  | reward (100), rechargeKill (200), rechargeTurn (300), boardUpdate (500) | 03 の表 |
-| `battle.defeat`  | lose (500) | 03 の表 |
-| `battle.end` (終端) | clear (500) | 03 の表 |
+| ステップ | 種別 | 標準処理 (order) | 典型的な登録者 |
+|---|---|---|---|
+| `run.start` | コマンド内で同期 | initialize (500) | star.startRelic (100) |
+| `chapter.build` | コマンド内で同期 | buildBoard (500) | star.initial* / star.chapterEnemy、bookRule (specs への寄与は派生リスト chapterPanelSpecs で) |
+| `chapter.start` | コマンド内で同期 | - | bookRule (章開始時の処理) |
+| `panel.taken` | コマンド内で同期 | - | relic.healOnPanelTaken、bookRule |
+| `panel.dumped` | コマンド内で同期 | - | (なし) |
+| `entity.gained` | コマンド内で同期 | - | bookRule.foodRot (memo 初期化) |
+| `entity.spent` | コマンド内で同期 | - | passive.exhaustAddEquipment (400: 消える前に代替を得る) |
+| `event.resolved` | コマンド内で同期 | harshness (500) | (なし) |
+| `chapter.clear` | コマンド内で同期 | rewards (500), reset (600), decideNext (700) | star.jewel± / crown± (派生 jewelGain / crownGain への寄与) |
+| `intermission.enter` | コマンド内で同期 | - | (なし) |
+| `intermission.leave` | コマンド内で同期 | - | (なし) |
+| `action.item` | コマンド内で同期 | - | (なし) |
+| `action.ability` | コマンド内で同期 | count (500) | recharge.otherAbilityUse (動詞 recharge 側)、passive.onlyWithoutAbilityThisTurn (自動 OFF) |
+| `action.equipToggle` | コマンド内で同期 | - | passive.mustWithOtherWeapon (自動 OFF) |
+| `player.damaged` | コマンド内で同期 | - | status.sleep (tag=enemyAttack かつ dmg ≥ 1 で解除) |
+| `enemy.damaged` | コマンド内で同期 | - | (なし) |
+| `run.end` | コマンド内で同期 | - | (なし) |
+| `battle.start` | battle | create (500) | relic.battleStartShield (派生 battleStartShield への寄与) |
+| `turn.start` | battle | fireDelayed (500) | status.confusion (100: 付与後最初の turn.start で 1 回だけ全装備 OFF)、ability.delayed* (delayed に積むのは使用時) |
+| `select` | battle: 入力待ち | - | — (attack → turn.command、flee → flee.command はコマンド側) |
+| `turn.command` | battle | command (500) | passive.powerEqualsHpAtCommand (100: memo に HP を保存) |
+| `player.tick` | battle: settle | statusTick (500) | status.poison (500) |
+| `turn.order` | battle | order (500) | (派生 turnOrder への寄与: enemyAction.blitz、status.sticky、passive.blitz) |
+| `player.strike.before` | battle | - | (なし) |
+| `player.strike` | battle | strike (500) | (登録不可。内訳は派生 attackPower / strikeFlags で) |
+| `player.strike.after` | battle | weaponWear (500) | passive.drain (300)、passive.poison (400) |
+| `player.act.skipped` | battle | sleepSkip (500) | (なし) |
+| `player.act.end` | battle: settle | statusDecay (500), buffsTick (600) | (なし) |
+| `enemy.act.begin` | battle: settle | blockReset (500), enemyStatusTick (600) | status.poison (side=both、600) |
+| `enemy.stunned` | battle: settle | unstun (500), enemyBuffsTick (600), enemyStatusDecay (650), routineAdvance (700) | (なし) |
+| `enemy.action` | battle | resolve (500) | (enemyAction モジュールの use) |
+| `enemy.act.after` | battle: settle | armorWear (200), parry (300), enemyBuffsTick (500), enemyStatusDecay (550), routineAdvance (600) | passive.rechargeAllOnBlock (100)、relic.powerAfterParry (400) |
+| `turn.end` | battle | advance (500), recharge (600) | relic.healEachTurn (300) |
+| `flee.command` | battle | command (500) | (なし) |
+| `flee.done` | battle | done (500) | (なし) |
+| `battle.victory` | battle | reward (100), rechargeKill (200), rechargeTurn (300), boardUpdate (500) | relic.healOnKill (400) |
+| `battle.defeat` | battle | lose (500) | (なし) |
+| `battle.end` | battle: 終端 | clear (500) | bookRule.foodRot (戦闘数を進める) |
 
 ## 派生値 / 許可 / 派生リスト
 

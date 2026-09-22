@@ -1,7 +1,8 @@
 // 盤面 (02 board)。幅 width × 2。下段 0..width-1 が選べる、上段 width..2width-1 がネクスト
 import { master } from "../master/index.js";
 import { nextUid } from "../uid.js";
-import { list, derive } from "../timeline/derive.js";
+import { derive } from "../derived/index.js";
+import { list } from "../lists/index.js";
 
 export function createEnemyState(ctx, defId) {
   return {

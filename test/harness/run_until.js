@@ -1,6 +1,6 @@
 // advance を select か battle.end (または指定ステップ) まで回す。シナリオテストとボットが使う
 import { dispatch } from "../../src/renderer/src/core/commands/index.js";
-import { isAdvanceable } from "../../src/renderer/src/core/timeline/steps.js";
+import { isAdvanceable } from "../../src/renderer/src/core/steps/index.js";
 
 export function runUntil(state, { until = null, max = 200, onCommand = null } = {}) {
   let n = 0;

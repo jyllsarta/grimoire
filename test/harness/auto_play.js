@@ -2,7 +2,7 @@
 // select で手を選び、それ以外のステップは advance を回す。判断用の乱数はゲームの rng とは別ストリーム
 import { dispatch } from "../../src/renderer/src/core/commands/index.js";
 import { phaseOf, q, panelAt, availableCommands } from "../../src/renderer/src/core/queries/index.js";
-import { isAdvanceable } from "../../src/renderer/src/core/timeline/steps.js";
+import { isAdvanceable } from "../../src/renderer/src/core/steps/index.js";
 import { master } from "../../src/renderer/src/core/master/index.js";
 
 export function mulberry32(seed) {

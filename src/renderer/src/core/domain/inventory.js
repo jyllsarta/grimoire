@@ -1,5 +1,6 @@
 // インベントリ (02 inventory)。横 1 列、pos は左端マス、占有幅はマスタ size
-import { entitySize } from "./entity.js";
+import { master } from "../master/index.js";
+import { entitySize, createEntity } from "./entity.js";
 
 // マスの占有表 (uid か null)
 export function occupancy(state, slotCount, { exclude = [] } = {}) {
@@ -31,6 +32,39 @@ export function removeEntity(state, uid) {
   const i = state.inventory.entities.findIndex((e) => e.uid === uid);
   if (i < 0) return null;
   return state.inventory.entities.splice(i, 1)[0];
+}
+
+// ON の武器 / 防具
+export function activeWeapons(state) {
+  return state.inventory.entities.filter((e) => e.kind === "equipment" && e.active && master.get("equipments", e.defId).category === "weapon");
+}
+
+export function activeArmors(state) {
+  return state.inventory.entities.filter((e) => e.kind === "equipment" && e.active && master.get("equipments", e.defId).category === "armor");
+}
+
+// 左右に接する実体 (右が空か、も)。隣接効果のパッシブが読む query (03 adjacent)
+export function adjacent(state, entity) {
+  const size = entitySize(entity);
+  const left = state.inventory.entities.find((e) => e.uid !== entity.uid && e.pos + entitySize(e) === entity.pos) ?? null;
+  const right = state.inventory.entities.find((e) => e.uid !== entity.uid && e.pos === entity.pos + size) ?? null;
+  return { left, right, rightEmpty: right == null };
+}
+
+// 章開始状態のインベントリ (派生リスト startEntities を実体化)。run.start と chapter.clear の reset が使う
+export function resetInventoryToStart(ctx) {
+  const state = ctx.state;
+  state.inventory.entities = [];
+  state.inventory.concealed = false;
+  const slotCount = ctx.derive("slotCount");
+  for (const spec of ctx.list("startEntities")) {
+    const entity = createEntity(ctx.uid(), spec.kind, spec.defId);
+    const pos = findFreePos(state, entitySize(entity), slotCount);
+    if (pos < 0) throw new Error(`開始インベントリが入り切らない: ${spec.kind} ${spec.defId} (slotCount=${slotCount})`);
+    entity.pos = pos;
+    state.inventory.entities.push(entity);
+    ctx.fire("entity.gained", { entity, source: { family: "standard", key: "start" } });
+  }
 }
 
 // arrangement = [{uid, pos}] を検証する。extra は arrangement に含めてよい inventory 外の実体 (保留中の獲得物)。

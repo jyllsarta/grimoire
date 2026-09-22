@@ -7,7 +7,7 @@
 
 import { createCtx } from "../ctx.js";
 import { phaseOf } from "../state/phase.js";
-import { isAdvanceable } from "../timeline/steps.js";
+import { isAdvanceable } from "../steps/index.js";
 import { advance } from "./advance.js";
 import * as chapterCommands from "./chapter.js";
 import * as battleCommands from "./battle.js";

@@ -5,10 +5,10 @@
 
 import { createRng } from "../rng.js";
 import { UID_START } from "../uid.js";
-import { BATTLE_STEP_NAMES } from "../timeline/steps.js";
+import { BATTLE_STEP_NAMES } from "../steps/index.js";
 import { master } from "../master/index.js";
 import { chapterSequence } from "../domain/chapter.js";
-import { derive } from "../timeline/derive.js";
+import { derive } from "../derived/index.js";
 import { createCtx } from "../ctx.js";
 import { entitySize, tableOfKind } from "../domain/entity.js";
 

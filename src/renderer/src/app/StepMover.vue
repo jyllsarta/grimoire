@@ -11,7 +11,7 @@
 import { watch, onBeforeUnmount } from "vue";
 import { useRunStore, onDispatched } from "./stores/run.js";
 import { useSessionStore } from "./stores/session.js";
-import { isAdvanceable } from "@core/timeline/steps.js";
+import { isAdvanceable } from "@core/steps/index.js";
 import { delayFor } from "./battle/delays.js";
 
 const run = useRunStore();

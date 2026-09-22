@@ -3,7 +3,7 @@
 // いまの battle.step を実行し、表の「次」を書く。settle 点で result が立っていれば victory / defeat に差し替える。
 // ============================================================
 
-import { BATTLE_STEPS, isAdvanceable } from "../timeline/steps.js";
+import { BATTLE_STEPS, isAdvanceable } from "../steps/index.js";
 import { settleStep } from "../domain/battle.js";
 import { currentActions } from "../domain/board.js";
 
