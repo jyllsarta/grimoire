@@ -1,0 +1,85 @@
+// ============================================================
+// デザイントークン (01「スタイル」)。xqueens の variables.scss + tale の style.css 冒頭。
+// コンポーネントはトークン以外の色・形を直書きしない。本ごとのスキンはこの CSS 変数の上書きで作る (skins/)。
+// 寸法は px (論理ステージ 1280x720 + CSS zoom。01「画面サイズ」)。
+// ============================================================
+:root {
+  --stage-base-width: 1280px;
+  --stage-base-height: 720px;
+
+  // フォントサイズは論理 px 固定 (zoom がウィンドウと一緒に拡大する)
+  --font-size-mini: 13px;
+  --font-size-small: 15px;
+  --font-size-normal: 18px;
+  --font-size-medium: 22px;
+  --font-size-large: 27px;
+  --font-size-xlarge: 36px;
+  --font-size-2xlarge: 48px;
+  --font-size-3xlarge: 64px;
+
+  --color-white0: #faf9f6;
+  --color-white: #e6e3de;
+  --color-white2: #d6d3d1;
+  --color-white3: #a39d99;
+  --color-white4: #9e9691;
+
+  --color-gray1: #ececec;
+  --color-gray2: #9c9c9c;
+  --color-gray3: #575757;
+  --color-gray4: #363636;
+  --color-gray5: #1b1b1b;
+
+  --color-base1: #80604d;
+  --color-base2: #644d3f;
+  --color-base3: #44362e;
+  --color-base4: #3a2f29;
+  --color-base5: #1f1b19;
+
+  --color-main0: #fff1d8;
+  --color-main1: #ffe4b2;
+  --color-main2: #eec881;
+  --color-main3: #ddb56b;
+  --color-main4: #c49d56;
+  --color-main5: #ad8a47;
+
+  --color-accent1: #dbffe1;
+  --color-accent2: #8aff9f;
+  --color-accent3: #5cdd78;
+  --color-accent4: #3aad53;
+  --color-accent5: #0c3615;
+
+  --color-positive0: #cedff8;
+  --color-positive1: #95b2dd;
+  --color-positive2: #5f81b4;
+  --color-positive3: #44618d;
+  --color-positive4: #213553;
+  --color-positive5: #0c1727;
+
+  --color-negative0: #ffdae2;
+  --color-negative1: #ff8aa4;
+  --color-negative2: #dd5c78;
+  --color-negative3: #ad3a53;
+  --color-negative4: #6e2031;
+  --color-negative5: #360c15;
+
+  --color-d0: #ffe4f8;
+  --color-d1: #ff90e3;
+  --color-d2: #ce64b3;
+  --color-d3: #a1438a;
+
+  // tale のトンマナ: 図形の色ファミリー (攻 = 金 / 防 = 青 / ライフ = 緑 / 害 = 桃)
+  --shape-attack: var(--color-main2);
+  --shape-block: var(--color-positive1);
+  --shape-life: var(--color-accent2);
+  --shape-harm: var(--color-negative1);
+
+  // border-radius は 4 種のみ
+  --radius-panel: 14px;
+  --radius-card: 8px;
+  --radius-button: 12px;
+  --radius-round: 999px;
+
+  // 落ち影 (右下方向、ぼかしは 1/3 切り上げ、色は黒)
+  --shadow-panel: 6px 10px 6px #000;
+  --shadow-card: 3px 5px 2px #000;
+}

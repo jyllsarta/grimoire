@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" width="32" height="32">
+  <!-- クラウン (幕間通貨その2) のアイコン。Astral 風に黒フチ + 金グラデ -->
+  <defs>
+    <linearGradient id="g" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#ffe98a"/>
+      <stop offset="0.55" stop-color="#ffc42e"/>
+      <stop offset="1" stop-color="#e08a00"/>
+    </linearGradient>
+  </defs>
+  <path d="M4 25 L3 9 L10 15 L16 5 L22 15 L29 9 L28 25 Z" fill="url(#g)" stroke="#1a1030" stroke-width="2.5" stroke-linejoin="round"/>
+  <rect x="4" y="22" width="24" height="5" rx="1.5" fill="#ffd257" stroke="#1a1030" stroke-width="2.5"/>
+  <circle cx="16" cy="18" r="2.4" fill="#ff4d8d" stroke="#1a1030" stroke-width="1.5"/>
+  <circle cx="9" cy="19.5" r="1.7" fill="#5ad0ff" stroke="#1a1030" stroke-width="1.5"/>
+  <circle cx="23" cy="19.5" r="1.7" fill="#5ad0ff" stroke="#1a1030" stroke-width="1.5"/>
+</svg>

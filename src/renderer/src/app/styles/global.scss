@@ -1,0 +1,130 @@
+// リセットと汎用クラス (tale の style.css の汎用部分)
+@use "./tokens.scss";
+
+@font-face {
+  font-family: "Main";
+  src: url("/assets/fonts/NekoSpoon.ttf");
+}
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+html,
+body {
+  width: 100%;
+  height: 100%;
+  background: var(--color-base5);
+  overflow: hidden;
+  font-family: "Main", sans-serif;
+  color: var(--color-white);
+  user-select: none;
+  -webkit-user-drag: none;
+  font-size: var(--font-size-normal);
+  line-height: 1.25;
+}
+
+img {
+  -webkit-user-drag: none;
+  pointer-events: none;
+}
+
+button {
+  font-family: inherit;
+  color: inherit;
+  border: none;
+  background: none;
+  cursor: pointer;
+  font-size: inherit;
+}
+
+// パネルは基本「落ち影」で前後関係を出す
+.panel_glass {
+  background: linear-gradient(160deg, rgba(58, 47, 41, 0.92), rgba(31, 27, 25, 0.94));
+  border: 1px solid var(--color-base1);
+  border-radius: var(--radius-panel);
+  box-shadow: var(--shadow-panel);
+}
+
+.heading {
+  color: var(--color-main1);
+  font-size: var(--font-size-medium);
+  letter-spacing: 0.06em;
+}
+
+.hint {
+  color: var(--color-white3);
+  font-size: var(--font-size-mini);
+  white-space: nowrap;
+}
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  white-space: nowrap;
+  border-radius: var(--radius-button);
+  font-size: var(--font-size-normal);
+  padding: 10px 26px;
+  background: linear-gradient(180deg, var(--color-main2), var(--color-main4));
+  color: var(--color-base5);
+  box-shadow:
+    0 3px 0 rgba(0, 0, 0, 0.35),
+    0 6px 14px rgba(0, 0, 0, 0.35);
+  transition:
+    transform 0.08s ease,
+    filter 0.12s ease;
+
+  &:hover {
+    filter: brightness(1.08);
+  }
+  &:active {
+    transform: translateY(2px);
+  }
+  &:disabled,
+  &.disabled {
+    filter: grayscale(0.8) brightness(0.7);
+    cursor: default;
+    transform: none;
+  }
+  &.sub {
+    background: linear-gradient(180deg, var(--color-base2), var(--color-base4));
+    color: var(--color-white);
+    border: 1px solid var(--color-base1);
+  }
+  &.danger {
+    background: linear-gradient(180deg, var(--color-negative2), var(--color-negative4));
+    color: var(--color-white0);
+  }
+  &.small {
+    padding: 4px 12px;
+    font-size: var(--font-size-small);
+  }
+}
+
+.chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 10px;
+  border-radius: var(--radius-round);
+  font-size: var(--font-size-small);
+  background: var(--color-base3);
+  border: 1px solid var(--color-base1);
+  &.bad {
+    background: var(--color-negative4);
+    border-color: var(--color-negative2);
+  }
+  &.good {
+    background: var(--color-accent5);
+    border-color: var(--color-accent4);
+  }
+}
+
+// ドット絵アイコン (24px 系) は --pixel-scale で整数倍にして滲ませない
+.pixel_icon {
+  image-rendering: pixelated;
+}
