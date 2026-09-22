@@ -1,0 +1,2 @@
+_isTrial:integer,_isCien:integer,_isClean:integer,id:integer,bookId:integer,key:string,values:intarray,name:string,description:string,icon:string
+,,,1,1,weaponCostPlus,[1],武器の呪い,武器パネルの回収コスト +1。,kama

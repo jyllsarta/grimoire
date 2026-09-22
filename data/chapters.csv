@@ -1,0 +1,6 @@
+_isTrial:integer,_isCien:integer,_isClean:integer,id:integer,name:string,description:string,width:integer,healPrice:integer,clearJewelBonus:integer,clearCrownBonus:integer,enemyIds:intarray,bossEnemyId:integer,equipmentIds:intarray,itemIds:intarray,abilityIds:intarray,eventIds:intarray,battleBg:string,bgmId:string
+,,,1,一章 はじまりのページ,仮データ。,3,1,10,1,"[901,901,901,1,902]",905,[1003],[2002],[],"[901,1]",character1,chara1
+,,,2,二章 ふかまるページ,仮データ。,3,1,20,2,"[901,902,902,903,2,904]",906,[1004],[2003],[3002],[2],character1,chara1
+,,,3,三章 おわりのページ,仮データ。,3,1,30,3,"[902,903,903,904,904,3,910]",907,[1005],[],[],[],character1,chara1
+,,,4,Extra 呪いの正体,仮データ。過酷さが閾値以上なら幕間の後に入る。,3,1,0,3,"[904,909,910,4]",908,[],[],[],[],character1,chara1
+,,,91,バステ実験室,テスト章 (9 系)。,3,1,10,1,"[901,902,903,904,909,910]",905,"[1004,1005,1006]","[2001,92001]",[3002],[901],character1,chara1

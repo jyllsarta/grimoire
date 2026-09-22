@@ -72,7 +72,7 @@
 `_skip, id, enemyId, order, name, actions[i].type, actions[i].value`
 
 - 敵 1 体につき 4 行 (order 1..4、id = 敵 id × 10 + order)、使わない行は `_skip` (tale の約束)
-- `actions[i].type` ∈ enemyAction モジュール key (`attack, block, sleep, selfHarm, pierce, blitz, crossBreak`) ∪ statuses.key (kind=common|unique: value = スタック / ターン)
+- `actions[i].type` ∈ enemyAction モジュール key (`attack, block, rest, selfHarm, pierce, blitz, crossBreak`) ∪ statuses.key (kind=common|unique: value = スタック / ターン)。「なにもしない」は `rest` (tale の `sleep`)。`sleep` と書くと statuses.key の眠りの付与になる (モジュール key と statuses.key が重ならないように名前を選ぶ。両方にあるときはモジュールが勝つ)
 
 ### equipments
 

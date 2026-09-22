@@ -256,7 +256,7 @@ shop != null             → intermission
 - `player.hp` は 0 以上 `maxHp` 以下。`wallet.*` は 0 以上
 - `inventory.entities` の占有マスが重ならず、`0 <= pos` かつ `pos + size <= slotCount`。pending 中の実体だけ pos=-1 で、それは `inventory.entities` に含まれない
 - `board.cells` の uid と `board.deck` の uid は重複せず、全部 `board.panels` にある。`panels` に孤児 (どこにもいない uid) がない
-- `battle.panelUid` は `board.cells` のどれかで、そのパネルは kind=enemy
+- `battle.panelUid` は `board.cells` のどれかで、そのパネルは kind=enemy (`battle.result` が victory のときは例外: `battle.victory` の boardUpdate でパネルは取り除かれるか chapterClear に変わり、`closeBattle` を待つ)
 - `battle.step` は 03 のバトルステップ名のどれか。`cursor` は `enemy.action` のときだけ 0 以上 actions.length 以下、他は 0。`result` が立っているのに step が select のままになることはない
 - `player.statuses` の key は重複しない。value は 1 以上 (0 になったら消す)。`unique` の turns は 1 以上。敵の `statuses` も同じ
 - `player.unique` が他ヒロインの固有バステを指さない (付与時にスキップ済み)

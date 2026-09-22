@@ -1,0 +1,3 @@
+_isTrial:integer,_isCien:integer,_isClean:integer,id:integer,characterId:integer,key:string,type:string,trigger:string,name:string,releaseByLose:boolean,order:integer
+,,,1,0,opening,talk,opening,はじまり,,1
+,,,2,1,bookStart,talk,bookStart,本のはじまり,,2

@@ -1,0 +1,27 @@
+node_modules
+dist
+out
+.DS_Store
+.eslintcache
+*.log*
+.env
+**/.env
+
+# 作業中のスクリーンショット等 (コミット対象外)
+/tmp
+
+# 秘匿素材リポへのシンボリックリンク
+/src/renderer/public/grimoire_scenes
+
+# 実行時に生成されるローカル専用ディレクトリ
+/save
+
+# ローカル専用の Claude 設定
+/.claude/settings.local.json
+
+# ビルド生成物
+/.generated
+/dist/web
+
+# Sheets API の自前 OAuth クライアント (tale/README.md の手順で作る)
+/tools/client_secret.json

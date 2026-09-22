@@ -1,0 +1,2 @@
+_isTrial:integer,_isCien:integer,_isClean:integer,id:integer,section:string,name:string,url:string,order:integer
+,,,1,font,NekoSpoon,,1

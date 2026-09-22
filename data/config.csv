@@ -1,0 +1,2 @@
+title:string,startSlots:integer,maxSlots:integer,shopSlots:integer,rerollPrice:integer,harshnessWeightMisfortune:integer,harshnessWeightStatus:integer
+オラクルちゃんと呪いの本,6,12,6,2,1,1

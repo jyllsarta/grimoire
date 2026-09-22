@@ -1,0 +1,2 @@
+_isTrial:integer,_isCien:integer,_isClean:integer,id:integer,characterId:integer,name:string,description:string,order:integer,chapterIds:intarray,extraChapterId:integer,harshnessThreshold:integer,bgmId:string,coverImage:string,skin:string
+,,,1,1,呪いの本 (仮),デスサイズちゃんを呪った本。3 章 + Extra Chapter (仮データ)。,1,"[1,2,3]",4,6,chara1,book1,default

@@ -1,0 +1,3 @@
+_isTrial:integer,_isCien:integer,_isClean:integer,id:integer,characterId:integer,name:string,description:string,icon:string,type:string,values:intarray,cost:integer,price:integer,size:integer,durability:integer,rechargeType:string,rechargeValue:integer,locked:boolean
+,,,3001,1,ライトボール,貫通 3 ダメージ。アイテムか装備を使い切ると再使用可能。,comet,attack,[3],2,2,2,,exhaust,1,
+,,,3002,1,スーパーブロック,このターン 8 ブロック。累計 10 ダメージ被弾で再使用可能。,barrier_ii,block,[8],2,4,2,,damageTaken,10,

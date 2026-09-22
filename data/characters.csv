@@ -1,0 +1,3 @@
+_isTrial:integer,_isCien:integer,_isClean:integer,id:integer,key:string,name:string,asKnownAs:string,description:string,hp:integer,power:integer,coins:integer,imageId:integer,bgmId:string,order:integer,initialEquipmentIds:intarray,initialItemIds:intarray,initialAbilityIds:intarray,startEquipmentIds:intarray,startItemIds:intarray,startAbilityIds:intarray
+,,,0,oracle,オラクルちゃん,呪いの本の持ち込み人,呪いの本を持ち込んできた。本を持たないので挑戦はできない (仮データ)。,20,2,2,0,chara0,0,[],[],[],[],[],[]
+,,,1,deathscythe,デスサイズちゃん,呪われた死神,本に呪われてしまった (仮データ。素材はシンティラを流用)。,30,3,2,1,chara1,1,"[1001,1001,1002,1002,1003]","[2001,2001]",[3001],[],[],[3001]

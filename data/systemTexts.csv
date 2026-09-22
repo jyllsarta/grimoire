@@ -1,0 +1,67 @@
+_isTrial:integer,_isCien:integer,_isClean:integer,id:integer,key:string,text:string
+,,,1,title.start,はじめる
+,,,2,title.continue,つづきから
+,,,3,title.options,オプション
+,,,4,common.back,もどる
+,,,5,common.close,とじる
+,,,6,common.yes,はい
+,,,7,common.no,いいえ
+,,,8,menu.heading,ヒロインをえらぶ
+,,,9,book.heading,本をえらぶ
+,,,10,book.start,はじめる
+,,,11,book.abandon,はじめから (いまのランを破棄)
+,,,12,ingame.chapter,章
+,,,13,ingame.coin,コイン
+,,,14,ingame.life,ライフ
+,,,15,ingame.deck,のこりのパネル
+,,,16,ingame.boss,ぬし
+,,,17,ingame.harshness,本の要求
+,,,18,ingame.giveUp,あきらめる
+,,,19,panel.take,もらう ({n} コイン)
+,,,20,panel.dump,すてる (+1 コイン)
+,,,21,panel.fight,たたかう
+,,,22,panel.next,ネクスト
+,,,23,panel.chapterClear,とびらがひらいた
+,,,24,battle.attack,こうげき
+,,,25,battle.flee,にげる
+,,,26,battle.cancel,やめる
+,,,27,battle.close,とじる
+,,,28,battle.turn,ターン {n}
+,,,29,battle.shield,シールド
+,,,30,battle.block,ブロック
+,,,31,battle.stunned,スタン
+,,,32,intermission.heading,じゅんび
+,,,33,intermission.heal,ライフを 1 回復 ({n} ジュエル)
+,,,34,intermission.reroll,ひきなおす ({n} ジュエル)
+,,,35,intermission.go,しゅっぱつ
+,,,36,intermission.soldOut,うりきれ
+,,,37,intermission.jewel,ジュエル
+,,,38,intermission.crown,クラウン
+,,,39,result.normal,ノーマルエンド
+,,,40,result.happy,ハッピーエンド
+,,,41,result.lose,まけちゃった…
+,,,42,result.abandoned,あきらめた
+,,,43,result.toMenu,メニューへ
+,,,44,pending.heading,もちものがいっぱい
+,,,45,pending.discard,受け取らない
+,,,46,inventory.on,ON
+,,,47,inventory.off,OFF
+,,,48,inventory.use,つかう
+,,,49,reason.coins,コインがたりない
+,,,50,reason.jewels,ジュエルがたりない
+,,,51,reason.crowns,クラウンがたりない
+,,,52,reason.sleep,ねむっている
+,,,53,reason.paralyze,しびれて武器を ON にできない
+,,,54,reason.arousal,はつじょうしてアビリティをつかえない
+,,,55,reason.armorForbidden,この本では防具を装備できない
+,,,56,reason.itemOnlyBattle,戦闘中にだけつかえる
+,,,57,reason.abilityNotReady,まだつかえない
+,,,58,reason.hpFull,ライフは満タン
+,,,59,reason.soldOut,うりきれ
+,,,60,reason.battleStarted,もう始まっている
+,,,61,inspector.title,インスペクタ
+,,,62,volume.title,おんりょう
+,,,63,volume.master,ぜんたい
+,,,64,volume.bgm,BGM
+,,,65,volume.se,こうかおん
+,,,66,options.fast,せんとう高速化

@@ -1,0 +1,18 @@
+appId: net.jyllsarta.grimoire
+productName: grimoire
+directories:
+  buildResources: build
+files:
+  - "out/**"
+  - "resources/**"
+  - "node_modules/**"
+  - "package.json"
+asarUnpack:
+  - resources/**
+win:
+  executableName: grimoire
+  target:
+    - dir
+mac:
+  notarize: false
+npmRebuild: false

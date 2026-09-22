@@ -1,0 +1,6 @@
+_isTrial:integer,_isCien:integer,_isClean:integer,id:integer,skitId:integer,order:integer,speaker:string,faceId:integer,text:string,imageId:integer,soundId:string
+,,,1,1,1,oracle,1,おにーさん、たすけてほしいの。この本、呪われてるんだ。,,
+,,,2,1,2,protagonist,,（ずいぶん古い本だ…）,,
+,,,3,1,3,deathscythe,2,わたし、この本にとりこまれちゃって…。,,
+,,,4,2,1,deathscythe,2,それじゃ、いこっか。駒はおにーさんが動かしてね。,,
+,,,5,2,2,protagonist,,（したの段のパネルだけ選べるらしい）,,

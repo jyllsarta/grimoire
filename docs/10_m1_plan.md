@@ -6,6 +6,34 @@
 
 - 設計書 v1.2 をユーザが承認 (「すべて OK」)。次は M1 = スキャフォールド + 基盤
 - 作業ブランチは `feature/m1-scaffold`。master へのマージはユーザ
+- **M1 の手順 1〜9 は着手済み** (下の「M1 でやったこと・残したこと」)。見た目の承認待ち
+
+## M1 でやったこと・残したこと
+
+やったこと (2026-09-22):
+
+- electron-vite 5 + **vite 7** (electron-vite 5 の peer が vite 5〜7 のため 8 は見送り) + vitest 5 + electron 44 + vue 3.5 + pinia 4 + eslint 10 + prettier。`npm test` / `npm run test:fuzz` / `npm run selftest` / `npm run lint` が通る
+- エディション基盤 (config / scripts / data-if / `__IS_X__` / `@masterdata` alias → `masterdata/<profile>`)、profile は base / trial / cien / cien_trial / clean
+- core: state (schema / 不変条件 / phase)、rng (xoshiro128**)、uid、master (注入式アクセサ + レジストリ駆動の検証)、timeline (steps / standard / bus / derive / sources)、効果モジュールのレジストリと M1 ぶんの効果 (status 12 / costume 4 / bookRule 2 / passive 3 / relic 6 / star 14 / item 4 / ability 2 / enemyAction 7 / eventEffect 7)、コマンド一式 (02 の表 + `debug.*`)、advance、outbox、run (newRun / serialize / migrate)
+- tools: lib / import (全 profile 生成) / push / sheets / format / sync.ps1 / shot (dev サーバ URL) / gen_schema (data/SCHEMA.md) / placeholders (assets/PLACEHOLDERS.md) / selftest
+- data: 05 の全テーブルの CSV (デスサイズちゃん 1 / オラクルちゃん 0 / placeholder 敵 1〜4 / 9 系)。生成物 `src/renderer/src/masterdata/<profile>/` もコミット。スプレッドシートは `push.js --create` で新規作成済み (`data/sheet_id.txt`)
+- app: stores (session / run / inspector)、StepMover + 待ち時間の表、sound (tricy 方式 + 一発物 → SE の表)、fragments (MessageBar / Toast / NumberPop)、tokens.scss、viewport (CSS zoom)、インスペクタ (state ツリー / コマンドと一発物 / 派生値の内訳 / 処理順 / 不変条件とマスタ警告 / 操作)、シーンの骨格 (Title / Menu / InGame / Intermission / Result)、ハッシュ直行 (`#ingame` `#battle` `#badbattle` `#intermission` `#result` `#starclear` `#autotest`。`,inspector` を付けるとインスペクタを開いた状態)
+- platform: storage (Electron ファイル / localStorage / メモリ)、edition、viewport、window。main は save/ の原子更新 + .bak
+- test: harness (run_game / auto_play / run_until / invariants / explain)、unit (rng / run / battle / order / poison / master / smoke)、fuzz (150 ラン)
+
+設計からの逸脱 (設計書側に反映済み or 要確認):
+
+- 敵アクションの「なにもしない」は `rest` にした (`sleep` は statuses.key の眠りと衝突するため。05 の enemyAction キー一覧を参照)
+- 不変条件「battle.panelUid は board.cells のどれかで kind=enemy」は `battle.result === "victory"` のとき (boardUpdate 後、closeBattle 待ち) は見ない (02 に追記)
+- レリック maxHpPlus の「現在値も同時に増える」は未実装 (派生 maxHp にだけ乗る)。M2 で `relic.acquired` 的な発火点を決める
+
+残したこと (M2 以降):
+
+- 効果モジュールの残り (tale の item 17 / ability 6 / passive 10 / relic 16 / enemyAction 11 / star 31 / recharge 7 のうち M1 に入れなかったもの)、ディレイ系、混乱の詳細、ショップの枠配分 (05)、リチャージ条件の query
+- スターパレット (有効ノード → star.effects のスナップショット)、スキット、tips、セーブ管理ダイアログ、オプションダイアログ、言語
+- tale/tools の sd_outline.py / star_outline.py / editor.js (M3)
+- Capacitor (Android) の依存は未追加。`__IS_ANDROID__` の分岐だけ置いてある
+- ボットは全敗 (勝率は参考値)。マスタとボットの手は M2 で
 - R2 末尾の「仮の解釈 4 点」(眠りの解除はシールド吸収でも / 混乱の全装備 OFF は付与後最初の turn.start / クロスブレイクの過酷さは別カウンタ・同じ重み / Extra Chapter は通常章形式) は異論が出ていないので採用
 
 ## M1 の手順

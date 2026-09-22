@@ -1,0 +1,7 @@
+_isTrial:integer,_isCien:integer,_isClean:integer,id:integer,characterId:integer,key:string,faceId:integer,message:string,order:integer
+,,,1,1,welcome,2,よろしくね、おにーさん。,1
+,,,2,1,battleStart,15,バトルだ！ 気をつけて！,1
+,,,3,1,battleStart,4,そうびの ON と OFF、わすれずにね。,2
+,,,4,1,playerAttack,15,えいっ！,1
+,,,5,1,victory,31,やった！,1
+,,,6,1,damaged,14,いたっ…,1

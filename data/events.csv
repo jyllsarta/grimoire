@@ -1,0 +1,6 @@
+_isTrial:integer,_isCien:integer,_isClean:integer,id:integer,kind:string,slot:integer,characterId:integer,name:string,description:string,icon:string,cutin:string,choiceIds:intarray,price:integer
+,,,1,placeholder,1,,入替ダミーイベント 1,挑戦中ヒロインの固有イベント 1 に置き換わる。,himitsu,,[],
+,,,2,placeholder,2,,入替ダミーイベント 2,挑戦中ヒロインの固有イベント 2 に置き換わる。,himitsu,,[],
+,,,11,misfortune,1,1,つまずいた,デスサイズちゃんのドジ (仮)。,himitsu2,cutin11,[111],
+,,,12,misfortune,2,1,鎌がひっかかった,デスサイズちゃんの不運 (仮)。,himitsu3,cutin12,"[121,122]",
+,,,901,normal,,-1,ふしぎなおくりもの,リボンのかかった箱がぽつんと置いてある。あけてみる？,gift,,"[9011,9012]",

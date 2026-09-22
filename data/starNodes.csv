@@ -1,0 +1,9 @@
+_isTrial:integer,_isCien:integer,_isClean:integer,id:integer,characterId:integer,kind:string,x:integer,y:integer,fromIds:intarray,effectType:string,values:intarray,delta:integer,gateType:string,gateValue:integer,name:string,description:string
+,,,1001,1,origin,0,0,[],,[],0,,,原点,すべての星はここから始まる。いつも有効。
+,,,1002,1,node,0,120,[1001],maxHpPlus,[5],2,,,がんじょう,最大ライフ +5。
+,,,1003,1,node,-150,240,[1002],powerPlus,[1],4,,,ちからこぶ,基礎こうげき +1。
+,,,1004,1,node,150,240,[1002],slotPlus,[2],4,,,大きなポケット,インベントリ +2。
+,,,1011,1,node,0,-120,[1001],maxHpMinus,[5],-1,,,ひよわ,最大ライフ -5。
+,,,1012,1,node,-150,-240,[1011],enemyHpPlus,[2],-2,,,強い敵,全ての敵のライフ +2。
+,,,1013,1,node,150,-240,[1011],badDurationPlus,[1],-2,,,呪われ体質,受ける状態異常 +1。
+,,,1021,1,gate,0,-360,"[1012,1013]",,[],0,clearAny,,深淵の入り口,本を 1 冊制覇すると開く。

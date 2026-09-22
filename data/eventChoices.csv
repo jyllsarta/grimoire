@@ -1,0 +1,6 @@
+_isTrial:integer,_isCien:integer,_isClean:integer,id:integer,label:string,resultText:string,effects[0].type:string,effects[0].value:integer,effects[1].type:string,effects[1].value:integer
+,,,111,いたた…,転んで衣装がやぶれた。ライフ -2。,hp,-2,crossBreak,0
+,,,121,むりに引きぬく,鎌は抜けたが衣装がやぶれた。,crossBreak,0,,
+,,,122,あきらめて置いていく,コイン -2 で人に頼んだ。,coins,-2,,
+,,,9011,あけてみる,コインがざくざく出てきた！,coins,5,,
+,,,9012,そっとしておく,箱はしずかに消えていった。,,,,

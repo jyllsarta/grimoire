@@ -1,0 +1,11 @@
+out
+dist
+.generated
+tmp
+save
+src/renderer/src/masterdata
+data/*.csv
+data/SCHEMA.md
+# 設計書は人が読む正本。表の整形で diff を汚さない
+docs/**/*.md
+package-lock.json

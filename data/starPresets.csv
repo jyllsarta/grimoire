@@ -1,0 +1,3 @@
+_isTrial:integer,_isCien:integer,_isClean:integer,id:integer,characterId:integer,difficulty:string,nodeIds:intarray,name:string,description:string
+,,,1,1,easy,"[1002,1003,1004]",イージー,有利な星を有効にしてスタート。
+,,,2,1,hard,"[1011,1012,1013]",ハード,不利な星を有効にしてスタート。
