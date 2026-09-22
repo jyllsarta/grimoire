@@ -10,11 +10,16 @@ R1 Q13/Q14 の要求 (処理順を私の一存で決められる、付与順に�
 3. 「毒の適用前に攻撃力上昇」も「適用後」も、モジュール側の 1 行 (どのステップに付くか) で選べる
 4. 効果を 1 つ足すときに触るのは、モジュール 1 ファイルとマスタだけ。検証と SCHEMA はレジストリから自動生成
 
-## ステップ一覧
+## ステップとは
 
-ステップは `<scope>.<moment>` の文字列。各ステップは「標準処理 (コアが必ずやること)」と「登録された効果」を **同じ order 空間** で並べて実行する。標準処理の order を公開するので、効果はその前後どちらにも付ける。
+ステップは `<scope>.<moment>` の名前を持つフック点で、「標準処理 (コアが必ずやること)」と「登録された効果」を **同じ order 空間** で並べて実行する。標準処理の order を公開するので、効果はその前後どちらにも付ける。
 
-### ラン・章スコープ
+ステップは 2 種類ある。
+
+- **ラン・章スコープのステップ**: コマンドの中で同期に発火する (`takePanel` の中で `panel.taken` など)。コマンド 1 回で完結する
+- **バトルのステップ**: `battle.step` の値として state に現れ、コマンド `advance` が **1 回につき 1 ステップ** 実行して次のステップ名を書く。演出の順番そのものがこの列で、app の StepMover が間を空けて advance を打つ (01)。xqueens の PhaseMover / `continue()` と同じ
+
+## ラン・章スコープのステップ
 
 | ステップ | 発火点 | 標準処理 (order) | 典型的な登録者 |
 |---|---|---|---|
@@ -28,63 +33,55 @@ R1 Q13/Q14 の要求 (処理順を私の一存で決められる、付与順に�
 | `event.resolved` | イベントの選択肢の効果を適用した後 | 500 harshness.misfortunes を加算 (misfortune のとき) | |
 | `chapter.clear` | 章クリアパネルを踏んだ直後 | 500 rewards (派生 `jewelGain` / `crownGain` を wallet へ、counters) → 600 reset (coin=0、インベントリを開始状態に、statuses / unique / costume / concealed をリセット) → 700 decideNext (Extra Chapter のクリア → ending=happy / 最終章 → 過酷さ判定: 達成なら stage=extra にして shop 生成、未達なら ending=normal / それ以外 → shop 生成) | star.jewel± / crown± (派生への寄与) |
 | `intermission.enter` / `intermission.leave` | 幕間の出入り | | |
+| `action.item` / `action.ability` / `action.equipToggle` | フリーアクション (バトル中の select で受け付ける) の解決後。500 で turnMemo.abilitiesUsed 等を更新 | recharge.otherAbilityUse、passive.onlyWithoutAbilityThisTurn (自動 OFF) |
+| `player.damaged` | 動詞 `damagePlayer` が発火 (payload: tag, dmg, hpLoss, absorbed) | status.sleep (tag=enemyAttack かつ dmg ≥ 1 で解除) |
+| `enemy.damaged` | 動詞 `damageEnemy` が発火 (payload: tag, dmg) | |
 | `run.end` | ending 確定 | | |
 
-### バトルスコープ (攻撃コマンド 1 回の流れ)
+## バトルのステップ (`battle.step`)
 
-```
-attack():
-  turn.command
-  player.tick
-  order = 派生 turnOrder            (player | enemy)
-  order が enemy なら 敵フェーズ → プレイヤーフェーズ、そうでなければ その逆
-  turn.end
-  turn.start                        (次のターン。battle が続いていれば)
+`startBattle` が `battle.start` で始め、`advance` が表の「次」へ進める。`select` は入力待ちで advance しない。`battle.end` が終端で `closeBattle` を待つ。
 
-プレイヤーフェーズ:
-  turnMemo.skipPlayer なら           player.act.skipped
-  そうでなければ                     player.strike.before → 一撃 (派生 attackPower を敵ブロックに当てる) → player.strike.after
-  player.act.end
+| step | 標準処理 (order) | 次 | 典型的な登録者 |
+|---|---|---|---|
+| `battle.start` | 500 create: shield = 派生 `battleStartShield`、turn = 1、counters.battles += 1 | `turn.start` | relic.battleStartShield (派生への寄与) |
+| `turn.start` | 500 fireDelayed: `battle.delayed` を全部発動して空にする (turn ≥ 2) | `select` | status.confusion (100: 付与後最初の turn.start で 1 回だけ全装備 OFF)、ability.delayed* (delayed に積むのは使用時) |
+| `select` | (入力待ち。フリーアクション / attack / flee / cancel を受け付ける唯一のステップ) | attack → `turn.command`、flee → `flee.command` | — |
+| `turn.command` | 500: started=true。眠りなら `turnMemo.skipPlayer = true` | `player.tick` | passive.powerEqualsHpAtCommand (100: memo に HP を保存) |
+| `player.tick` | 500 statusTick (プレイヤー側ステートの行動前 tick。毒はここ)。**settle** | `turn.order` | status.poison |
+| `turn.order` | 500: `turnMemo.order` = 派生 `turnOrder` (敵先攻ならイベント `blitz`) | order=enemy → `enemy.act.begin` / order=player → プレイヤー行動 (下) | |
+| プレイヤー行動 (遷移の呼び名) | — | `turnMemo.skipPlayer` なら `player.act.skipped`、そうでなければ `player.strike.before` | |
+| `player.strike.before` | (なし) | `player.strike` | |
+| `player.strike` | 500 strike: 派生 `attackPower` と 派生 `strikeFlags` (pierce / blitz / drain / poisonApply) → 敵ブロック → ダメージ → justLethal 判定 | `player.strike.after` | (登録不可。内訳は派生値で) |
+| `player.strike.after` | 300 drain / 400 poisonApply / 500 weaponWear | `player.act.end` | passive (drain 等は passive モジュールがここに登録) |
+| `player.act.skipped` | 500 イベント `sleepSkip` | `player.act.end` | |
+| `player.act.end` | 500 statusDecay (statuses の stack/turn を -1、unique.turns を -1、0 で消滅) → 600 buffsTick (player 側 buffs の turns -1)。**settle** | order=player → `enemy.act.begin` / order=enemy → `turn.end` | |
+| `enemy.act.begin` | 500 blockReset (enemy.block = 0) → 600 enemyStatusTick (敵側ステートの行動前 tick。毒はここ)。**settle** | stunned → `enemy.stunned` / アクションなし → `enemy.act.after` / それ以外 → cursor=0 で `enemy.action` | status.poison (side=both) |
+| `enemy.stunned` | 500 stunned=false → 600 enemyBuffsTick → 650 enemyStatusDecay → 700 routineIndex += 1。**settle** | 敵フェーズの後 (下) | |
+| `enemy.action` | 500 resolve: `actions[cursor]` を `enemyAction.<type>` モジュールが解決 (attack は 派生 `enemyAttack` と 派生 `blockValue` を使う) → cursor += 1 | result が立った → `enemy.act.after` (残りは飛ばす) / cursor < actions.length → `enemy.action` / そうでなければ `enemy.act.after` | |
+| `enemy.act.after` | 200 armorWear → 300 parry (全弾ブロックなら stunned=true) → 500 enemyBuffsTick → 550 enemyStatusDecay (敵側ステートの -1) → 600 routineIndex += 1。**settle** | 敵フェーズの後 (下) | passive.rechargeAllOnBlock (100)、relic.powerAfterParry (400) |
+| 敵フェーズの後 (遷移の呼び名) | — | `turnMemo.fleeing` → `flee.done` / order=enemy → プレイヤー行動 / order=player → `turn.end` | |
+| `turn.end` | 500 advance: turn += 1、turnMemo = {}、counters.turns += 1 → 600 recharge(turn) | `turn.start` | relic.healEachTurn (300) |
+| `flee.command` | 500: started=true、`turnMemo.fleeing = true` | `enemy.act.begin` (敵に 1 回自由行動される) | |
+| `flee.done` | 500 result=flee、counters.flees += 1 (イベント `fleeDone`) | `battle.end` | |
+| `battle.victory` | 100 reward (coin += 派生 `killReward`) → 200 recharge(kill) → 300 recharge(turn) → 500 boardUpdate (ボスなら chapterClear パネル化、そうでなければ discard と落下・補充)、counters.kills += 1 | `battle.end` | relic.healOnKill (400) |
+| `battle.defeat` | 500 ending = lose | `battle.end` | |
+| `battle.end` | 500 clear delayed (終端。`closeBattle` を待つ) | — | bookRule.foodRot (戦闘数を進める) |
 
-敵フェーズ:
-  enemy.act.begin
-  stunned なら                       enemy.stunned
-  そうでなければ 各アクションについて  enemy.action
-  enemy.act.after
-```
+### 結果の確定 (settle)
 
-| ステップ | 標準処理 (order) | 典型的な登録者 |
-|---|---|---|
-| `battle.start` | 500 create: shield = 派生 `battleStartShield`、turn=1 | relic.battleStartShield (派生への寄与) |
-| `turn.start` | 500 fireDelayed: `battle.delayed` を全部発動して空にする (turn ≥ 2) | status.confusion (100: 付与後最初の turn.start で 1 回だけ全装備 OFF)、ability.delayed* (delayed に積むのは使用時) |
-| `action.item` / `action.ability` / `action.equipToggle` | (フリーアクションの解決後。500 で turnMemo.abilitiesUsed 等を更新) | recharge.otherAbilityUse、passive.onlyWithoutAbilityThisTurn (自動 OFF) |
-| `turn.command` | 500 決定: 眠りなら `turnMemo.skipPlayer = true` | passive.powerEqualsHpAtCommand (memo に HP を保存) |
-| `player.tick` | 500 statusTick (プレイヤー側ステートの行動前 tick。毒はここ) | status.poison |
-| `player.strike.before` | (なし) | |
-| `player.strike` (標準処理そのもの) | 500 strike: 派生 `attackPower` と 派生 `strikeFlags` (pierce / blitz / drain / poisonApply) → 敵ブロック → ダメージ → justLethal 判定 | (登録不可。内訳は派生値で) |
-| `player.strike.after` | 300 drain / 400 poisonApply / 500 weaponWear | passive (drain 等は passive モジュールがここに登録) |
-| `player.act.skipped` | (なし) | status.sleep (演出用イベント) |
-| `player.act.end` | 500 statusDecay (statuses の stack/turn を -1、unique.turns を -1、0 で消滅) → 600 buffsTick (player 側 buffs の turns -1) | |
-| `enemy.act.begin` | 500 blockReset (enemy.block = 0) → 600 enemyStatusTick (敵側ステートの行動前 tick。毒はここ) | status.poison (side=both) |
-| `enemy.stunned` | 500 stunned=false, routineIndex += 1 | |
-| `enemy.action` | 500 resolve: `enemyAction.<type>` モジュールが解決 (attack は 派生 `enemyAttack` と 派生 `blockValue` を使う) | |
-| `enemy.act.after` | 200 armorWear → 300 parry (全弾ブロックなら stunned=true) → 500 enemyBuffsTick → 550 enemyStatusDecay (敵側ステートの -1) → 600 routineIndex += 1 | passive.rechargeAllOnBlock (100)、relic.powerAfterParry (400) |
-| `player.damaged` | (動詞 `damagePlayer` が発火。payload: tag, dmg, hpLoss, absorbed) | status.sleep (tag=enemyAttack かつ dmg ≥ 1 で解除) |
-| `enemy.damaged` | (動詞 `damageEnemy` が発火。payload: tag, dmg) | |
-| `turn.end` | 500 advance: turn += 1、turnMemo = {} → 600 recharge(turn) | relic.healEachTurn (300) |
-| `battle.victory` | 100 reward (coin += 派生 `killReward`) → 200 recharge(kill) → 300 recharge(turn) → 500 boardUpdate (ボスなら chapterClear パネル化、そうでなければ discard と落下・補充) | relic.healOnKill (400) |
-| `battle.defeat` | 500 ending = lose | |
-| `battle.flee` | 500 result = flee (敵状態は盤面に残る) | |
-| `battle.end` | 500 clear delayed、counters | bookRule.foodRot (戦闘数を進める) |
-
-死亡・撃破の判定はステップではなく **動詞** (`damagePlayer` / `damageEnemy`) の中で即座に行い、`battle.result` を立てて `battle.victory` / `battle.defeat` を発火する。スクリプトは各ステップの後で `battle.result` を見て止まる。
+- 動詞 `damagePlayer` / `damageEnemy` は hp が 0 以下になったら `battle.result` を立てるだけで、ステップは変えない
+- 表で **settle** と書いたステップの末尾と、フリーアクションの末尾で、`result` が立っていれば次のステップを `battle.victory` / `battle.defeat` に差し替える (残りの経路は捨てる)
+- settle 点をステップごとにしないのは、プロトの意味を保つため: 敵を倒した一撃でも drain・毒付与・武器摩耗・ステート減衰は起きる (`player.act.end` まで進んでから確定)。敵フェーズの途中で敵が自滅・毒死したら残りのアクションを飛ばして `enemy.act.after` (防具摩耗など) を通してから確定
+- `flee.done` は自分で result=flee を立てて `battle.end` へ進む
 
 ### 減衰の位置 (プロトの意味を保つ)
 
 - 共通ステート (stack / turn) と固有バステは **`player.act.end` で -1**。敵フェーズで付与された「麻痺 2」は、次の 2 回の攻撃で武器が使えない (付与ターンの終わりには減らない)。眠りも同じ場所で減るので「眠り 1」= 手番を 1 回スキップ
 - 毒だけは `player.tick` でダメージ → -1
 - バフ (`battle.buffs` / `enemy.buffs`) は **自分側の行動の後** に -1。`turns: 1` = 次の自分の行動 1 回に効く (パリィ後の攻撃力アップが次の一撃に乗る)
-- 敵側のステート (`enemy.statuses`) は **`enemy.act.after` で -1**。毒は `enemy.act.begin` で tick。プレイヤー側と対称
+- 敵側のステート (`enemy.statuses`) は **`enemy.act.after` / `enemy.stunned` で -1**。毒は `enemy.act.begin` で tick。プレイヤー側と対称
+- 逃走のターンは `turn.end` を通らないので、リチャージ (turn) もステートの減衰も進まない (プロト踏襲)
 
 ## 処理順の規則
 
@@ -137,7 +134,7 @@ export default defineEffect({
 |---|---|
 | family | `status` / `costume` / `bookRule` / `passive` (装備) / `relic` / `star` / `item` / `ability` / `enemyAction` / `eventEffect` |
 | key | family 内で一意。マスタの type (または statuses.key) と一致 |
-| values / refs | マスタ `values` の schema。足りない・型違い・参照切れは selftest が落とす |
+| values / refs | マスタ `values` の schema。足りない・型違い・参照切れは selftest が警告する |
 | text | app が図形・チップ・説明の自動生成に使うヒント。ロジックは見ない |
 | use(ctx, src) | item / ability の使用時の効果 |
 | hooks | `{ [step]: { order, when?, run } }`。when は発火条件 (省略で常時) |
@@ -200,8 +197,8 @@ src (source) は `{ family, key, def, instance?: {uid, memo}, target? }`。内�
 
 | 動詞 | 規則 |
 |---|---|
-| `damagePlayer(n, {tag: enemyAttack/poison/event/self, pierceShield, source})` | シールドを先に削る (pierceShield なら貫通)。実際にライフが減った分だけ `turnMemo.damageTakenThisTurn` と recharge(damageTaken) を進める。`player.damaged` を発火 (眠りの解除はそこで status.sleep がやる)。0 以下で `battle.defeat` |
-| `damageEnemy(n, {ignoreBlock, tag: strike/item/ability/poison/self, source})` | ブロック処理。通ったダメージを `enemy.damageTaken` に発生源つきで 1 件積む (集計は派生 `damageBy`)。`enemy.damaged` を発火。ちょうど 0 で recharge(justLethal)。0 以下で `battle.victory` |
+| `damagePlayer(n, {tag: enemyAttack/poison/event/self, pierceShield, source})` | シールドを先に削る (pierceShield なら貫通)。実際にライフが減った分だけ `turnMemo.damageTakenThisTurn` と recharge(damageTaken) を進める。`player.damaged` を発火 (眠りの解除はそこで status.sleep がやる)。0 以下で `battle.result = defeat` (ステップは settle が変える) |
+| `damageEnemy(n, {ignoreBlock, tag: strike/item/ability/poison/self, source})` | ブロック処理。通ったダメージを `enemy.damageTaken` に発生源つきで 1 件積む (集計は派生 `damageBy`)。`enemy.damaged` を発火。ちょうど 0 で recharge(justLethal)。0 以下で `battle.result = victory` |
 | `heal(n, {source})` | 上限は maxHp。実回復 0 でも毒は全部消える (drain は実回復 1 以上のときだけ、passive 側で条件付け) |
 | `applyStatus(target, key, value, {source})` | target は player か敵 (panelUid)。04 の付与規則 (side の一致 / stack 加算 / turn 上書き / unique 上書き / 他ヒロインならスキップ / star.badDuration)。player 側の bad なら counters.harshness.statusHits を進める |
 | `addBuff(side, key, value, turns)` | statuses(kind=buff) の key。同 key は加算 (stackable) |
@@ -209,7 +206,7 @@ src (source) は `{ family, key, def, instance?: {uid, memo}, target? }`。内�
 | `spend(entity)` | 耐久 -1、0 で消して `entity.spent` |
 | `recharge(type, amount, {excludeDefId})` | 休んでいるアビリティの progress を進め、達成で ready |
 | `setCostume(key, cause)` / `crossBreak()` | 04 の遷移。crossBreak は unique 中は何もしない (イベント `crossBreakIgnored`)。衣装が実際に変わったときだけ `counters.harshness.crossBreaks += 1` |
-| `emit(type, payload)` | イベントを積む。その時点の state のスナップショットを付ける |
+| `emit(type, payload)` | 一発物を outbox に流す (state には残らない)。app の StepMover はこのステップで出た一発物の種別から待ち時間を決める |
 | `memo(src, key, value?)` | src のスコープの memo に読み書き |
 | `rand(n)` / `pick(list)` | state.rng を進める |
 
@@ -230,9 +227,10 @@ family 内の並びも明示列挙。**ステートは並びが意味を持つ**
 - `queries/resolvedOrder(state, step)`: いまの装備・レリック・ステート・本のルールで、そのステップに並ぶハンドラを順に返す。インスペクタの「処理順ビューア」がこれを表示する
 - `test/unit/order.test.js`: 代表的な組み合わせで期待順を固定
 - `test/unit/effects/*.test.js`: 効果 1 つにつき 1 ファイル。モジュールと同じ名前
+- `test/harness/runUntil(state, step)`: advance を `select` か `battle.end` まで回す。シナリオテストとボットが使う
 - selftest: レジストリと全マスタの type/values/refs を突き合わせる
 
-## イベント型 (v1 案。実装で増減する)
+## 一発物 (outbox イベント) の型 (v1 案。実装で増減する)
 
 `panelTake / panelDump / panelFall / panelRefill / bossAppear / chapterClear / rewards` /
 `battleStart / turnStart / blitz / playerStrike / enemyBlocked / drainHeal / poisonApply / weaponWear / equipBreak / itemUse / itemBreak / abilityUse / abilityReady / abilityBreak / delayedSet / delayedFire / selfBuff / enemyDebuff / shieldGain / heal / poisonCured` /

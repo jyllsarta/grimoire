@@ -45,15 +45,15 @@ grimoire/
         │   ├ state/          schema.js (初期状態・検証・不変条件), phase.js (フェーズ導出)
         │   ├ rng.js, uid.js
         │   ├ master/         tables.js (列定義。tools も同じ定義を読む), index.js (アクセサ), validate.js
-        │   ├ timeline/       steps.js (ステップ一覧), standard.js (標準処理と order), bus.js (フック解決), derive.js (派生値)
+        │   ├ timeline/       steps.js (ステップ一覧と遷移), standard.js (標準処理と order), bus.js (フック解決), derive.js (派生値)
         │   ├ effects/        index.js (明示順レジストリ) + statuses/ costumes/ bookRules/ passives/ relics/ star/ items/ abilities/ enemyActions/ eventEffects/
-        │   ├ commands/       1 コマンド 1 ファイル + index.js (dispatch とフェーズ判定)
+        │   ├ commands/       1 コマンド 1 ファイル + index.js (dispatch とフェーズ判定)。advance.js がステップマシンを 1 つ進める
         │   ├ domain/         board.js inventory.js battle.js chapter.js shop.js star.js player.js wallet.js (状態を動かす動詞)
         │   ├ queries/        UI が読む問い合わせ (内訳、許可、山札の公開情報、リチャージ条件 ...)
-        │   ├ events.js       イベント生成と state スナップショット
+        │   ├ outbox.js       一発物 (演出・音) の通知。購読方式
         │   └ run.js          newRun / serialize / deserialize / migrate
         ├ masterdata/         生成物。data/*.csv から tools/import.js が profile 別に生成し、コミットする
-        ├ app/                Vue 層: scenes/ dialogs/ components/ fragments/ stores/ sound/ inspector/ styles/ (tokens と本ごとの skins/)
+        ├ app/                Vue 層: scenes/ dialogs/ components/ fragments/ stores/ sound/ inspector/ styles/ (tokens と本ごとの skins/)。StepMover と待ち時間の表もここ
         └ platform/           保存先アダプタ (Electron ファイル / localStorage)、エディションフラグ、ウィンドウ
 ```
 
@@ -63,36 +63,42 @@ grimoire/
 
 | 層 | 役割 | 持ってよい状態 |
 |---|---|---|
-| core | ルール。コマンドで state を変え、イベント列を返す。乱数は state の rng だけを使う | GameState (02) のみ。モジュール変数に状態を持たない |
-| app (Vue) | 描画、演出、音、入力。core のコマンドを dispatch し、返ってきたイベントを順に演出する | シーン、ダイアログ、演出中フラグ、表示中スナップショット、オプション |
+| core | ルール。コマンドで state を変え、一発物を outbox に流す。乱数は state の rng だけを使う。秒数を知らない | GameState (02) のみ。モジュール変数に状態を持たない |
+| app (Vue) | 描画、演出、音、入力、**ステップの進行 (StepMover)**。state を読んで描き、core のコマンドを dispatch する | シーン、ダイアログ、選択中の対象、演出中フラグ、オプション、待ち時間の表 |
 | platform | 保存先、ウィンドウ、エディションフラグ、Capacitor | なし (I/O のみ) |
 | masterdata | 生成された定数 | なし |
 
-## データの流れ
+## データの流れ (xqueens 方式)
 
 ```
 [入力] → app: run store の dispatch(command, args)
-      → core: commands/index が phaseOf(state) で許可判定 → コマンド関数が state を直接書き換え、events を返す
-      → app: current = structuredClone(state) を保存 (オートセーブもこれ)
-      → app: events を順に演出。各イベントは「その時点の state 全体のスナップショット」を持ち、演出中は displayed = event.state、演出が終わったら displayed = current
+      → core: commands/index が phaseOf(state) と battle.step で許可判定 → コマンド関数が state を直接書き換え、一発物を outbox に流す
+      → app: state は Vue の reactive なので、変わった場所だけ再描画される。outbox の一発物 (数字ポップ、トースト、SE、カットイン) を Fragments / Sound に振り分ける
+      → app: オートセーブ (JSON.stringify)
+バトル中:
+      攻撃ボタン → dispatch("attack")  (battle.step が select → turn.command になるだけ)
+      StepMover が battle.step を watch し、「そのステップで出た一発物の演出時間」だけ待ってから dispatch("advance") を打つ。select か battle.end に着くまで繰り返す
 ```
 
-- core の state は Vue のリアクティブにしない。UI は「コマンド 1 回 = スナップショット 1 個」の粒度で再描画する。state は小さい (数十 KB) ので clone は無視できる。tricy の反省の中身と、同期漏れを防ぐ規則は下の「表示と state の同期」
-- イベントは transient。state には残さない。セーブされるのは常にコマンド完了後の整合した state だけなので、演出の途中で落ちても再開は「コマンド後の状態」から始まる (演出は再生されない)
-- 盤面の落下や補充の演出は、イベントの payload (`panelFall` 等) と、前後のスナップショットの盤面差分から組み立てる
-- 演出の待ち時間は app が持つ。core は秒数を知らない (tricy の反省)
+- **state は 1 本の実物**。app の run store が `reactive(state)` で包んで晒し、全コンポーネントが直接読む (プロトの battleVm のような写しは作らない)。core は包まれているかどうかを気にしない。テストは素の state で同じコードを回す (xqueens と同じ)
+- **書くのは dispatch だけ**。Vue から state に代入しないことを lint (`no-state-write`) で守る。xqueens で Vue 側の state 書き込みが 0 件だったのと同じ規律
+- **演出の表示順はゲームロジック**。バトルのターンは state 上のステップマシン (`battle.step`) で、`advance` が 1 ステップだけ進める。どの順に何が起きるかは 03 のステップ表が決め、app は間を空けるだけ。xqueens の PhaseMover / `continue()` と同じ構造
+- **待ち時間は app が持つ** (xqueens ではフェーズモジュールの `defaultDelay()` にあった。tricy の反省 (4) に従って app の表に移す)。表はイベント種別 → ms で、1 ステップの待ち = そのステップで出た一発物の待ちの合計。高速化トグルは倍率
+- **一発物は outbox** (tricy の改良)。xqueens は state 内のキュー (`soundManager.unplayedSounds` 等) を View が watch して flush していたが、grimoire はオートセーブに transient を混ぜたくないので購読方式にする。テストは購読で全部捕捉できる
+- 途中セーブはコマンドごと (advance 含む)。ターンの途中で落ちても `battle.step` が残っているので、再開すると StepMover が続きを演出つきで進める
+- 章クリア・パネル回収・幕間のコマンドは 1 回で完結する (ステップに分けない)。盤面の落下・補充は outbox のイベント (`panelFall` 等) と uid キーの TransitionGroup で動かす
 
-### 表示と state の同期
+### Proxy の扱い (core の 3 規則)
 
-画面が state とズレる経路を構造で潰す。
+xqueens ではエンジンが Vue を import せず、実行時だけ Proxy 越しに動き、`toRaw` / `markRaw` を一度も使わずに済んでいる。grimoire も同じにする。core に置く規則は 3 つだけ。
 
-- **UI が描くのは常に「本物の state のどれか」**。演出中は各イベントに付いた state スナップショット (`event.state`、emit 時点の structuredClone)、演出が終われば `current`。プロトの battleVm のような「手で更新する表示用の写し」は作らない。部分ビュー (BattleView) も作らない (欠けたフィールドが古いまま残る事故を無くす)
-- **表示に切り替える代入点は 1 箇所** (`run store` の `show(snapshot)`)。コンポーネントは state を props / inject で受けて描くだけで、state の値を自分の `data` に写さない (computed のみ)。これは lint とレビューで守る
-- state 側の更新点も 1 箇所 (`dispatch`)。デバッグ関数もコマンド経由
-- tricy の反省の具体: (1) エンジンが Vue の `reactive` を import してロジックが Vue 依存になり、node のテストにも Vue が要った (2) Proxy をロジックが触ると `===` の同一性、Map/Set のキー、`structuredClone` (Proxy は例外を投げる) で罠が出て `toRaw` が散らばる (3) 音や演出の要求を state 内のキューに積んで View が watch + flush する方式 (xqueens) は、View が居ないとキューが溜まる。tricy は購読方式にしてテストで捕捉しやすくなった (4) ロジック内の `after()` タイマーが演出秒数を知っていた
-- 代案 (xqueens 方式: state を deep reactive にしてロジックが直接触る) は同期漏れがゼロで実績もある。採らない理由は (1)(2) と、演出の中間状態 (ターンの途中) を見せるために結局「時間で区切って進めるロジック」が要ること。もしスナップショット方式が実装で辛ければ、コマンドを「ステップごとに yield する generator」にして app が間を空けて進める形 (xqueens の PhaseMover に近い) へ切り替えられるよう、コマンドの内部はステップ単位で書く
+1. オブジェクト同士を `===` で比べない (uid か key で比べる)
+2. オブジェクトを Map / Set のキーにしない
+3. 複製・保存は `JSON.parse(JSON.stringify())` (`structuredClone` は Proxy で例外になる)
 
-## 画面サイズ (R1 Q3 の提案)
+`state.uiState` に当たるもの (選択中の対象、開いているダイアログ、演出中フラグ) は GameState に入れず、Pinia の run ストアに置く (セーブに混ざらないように)。
+
+## 画面サイズ (R1 Q3 の提案、R2 Q37 で確定。仕上がりは目視レビュー)
 
 transform: scale のステージフィットは実効解像度が落ちるので採らない。代わりに **論理ステージ + CSS `zoom`** にする。
 
@@ -113,8 +119,9 @@ transform: scale のステージフィットは実効解像度が落ちるので
 - `scenes/`: Title / Opening / Menu / CharacterDetail (ダイアログでもよい) / BookSelect / InGame / Intermission / Result / StarPalette / StarEditor(dev)
 - `dialogs/`: Skit / Tips / Options / Savedata / Credits / Language / Confirm / Organize / PanelPeek / Detail (個体の詳細。ルール説明の Tips と対。Desc のような略名は使わない)
 - `components/`: Board, PanelCard, InventoryBar, EntityTile, LifePanel, StatusChips, BattlePanel, EnemyFigure, CharacterFigure (立ち絵。オラクルちゃんも同じ部品), SdPiece (駒), Baloon, Shape (図形 SVG), Ornament (飾り。OrnamentHead / OrnamentRule / OrnamentFoot), Shop, DeckSummary ...
-- `fragments/`: xqueens の FragmentManager 方式。core が `emit` したイベントを app 側の演出テーブルが Fragment (トースト、数字ポップ、カットイン) に変換する
-- `stores/`: `session` (scene, dialogs, options, language, 音量)、`run` (current / displayed / playing / queue / dispatch)、`inspector` (dev)
+- `fragments/`: xqueens の FragmentManager 方式。outbox の一発物を app 側の演出テーブルが Fragment (トースト、数字ポップ、カットイン) に変換する
+- `StepMover`: `battle.step` を watch し、待ち時間の表 (`app/battle/delays.js`: イベント種別 → ms、高速化倍率) に従って `advance` を打つ。xqueens の PhaseMover 相当。世代カウンタ (epoch) で古いタイマーを捨てるのも同じ
+- `stores/`: `session` (scene, dialogs, options, language, 音量)、`run` (state を reactive で保持、dispatch、選択中の対象、演出中フラグ)、`inspector` (dev)
 - `sound/`: tricy の Vue 非依存 SoundManager (WebAudio、sound_master がファイル一覧)
 - スタイル: xqueens 準拠のトークン (色・フォントサイズ・角丸) を `styles/tokens.scss` に置き、tale の tonmana ルール (図形の色ファミリー、パネル形状、落ち影) を移植する。コンポーネントは scoped。いつか整える
 - **インゲームは本ごとに別のスキン** (本の表紙のテイストを中にも反映する)。スキン = トークンの上書き (CSS 変数の束) + 差し替え素材で、`books.skin` が選ぶ。コンポーネントはトークン以外の色・形を直書きしない。どこを可変にするか、表紙のデザインは 2 キャラ目の実装時に詰める
@@ -136,9 +143,9 @@ xqueens v1.3.0 の方式をそのまま移植する。
 
 ## 開発ビルド限定
 
-- **state インスペクタ** (08_verification): 右側に state ツリー、変更フィールドの発光、直前のコマンドとイベント、派生値の内訳、処理順ビューア
+- **state インスペクタ** (08_verification): 右側に state ツリー、変更フィールドの発光、直前のコマンドと一発物、派生値の内訳、処理順ビューア、マスタ警告
 - URL ハッシュ直行 (`#ingame` `#battle` `#intermission` ...): dev 専用のシナリオルータが、固定シードでコマンドを打って状態を作る
-- デバッグ関数 (通貨増加、全回復、任意章開始、戦闘即勝利、ステート付与、乱数リシード)
+- デバッグ関数 (通貨増加、全回復、任意章開始、戦闘即勝利、ステート付与、乱数リシード)。全部コマンド経由
 - `__IS_PROD__` で全部落ちる
 
 ## Electron main と他プラットフォーム

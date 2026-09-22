@@ -36,7 +36,7 @@
 6. kind=unique: `player.unique` を **上書き** (別の固有バステでも同じでも)。上書き前の固有バステの `onExpire` は呼ばない (置換であって消滅ではない)
 7. `onApply` を呼ぶ (麻痺: ON の武器を強制 OFF、混乱: シャッフル + concealed + 次ターンの全装備 OFF 予約)
 8. target が player で polarity=bad なら `counters.harshness.statusHits += 1`
-9. イベント `statusApply` (view 付き)
+9. 一発物 `statusApply` を outbox に流す
 
 付与元は敵アクションとイベント効果 (`eventEffect.status`)。どちらも同じ規則を通る。
 

@@ -8,10 +8,10 @@ core が Vue/DOM を持たないので、ほとんどの検証は node で回る
 |---|---|---|---|
 | unit | `test/unit/` | 効果モジュール 1 つ = 1 ファイル。派生値の内訳、許可、付与規則、順序 (`order.test.js`)、rng の再現性、serialize 往復 | 常時 (`npm test`、数秒) |
 | scenario | `test/scenario/` | 固定シードでコマンド列を打ち、state と events を検証する DSL。「毒3 眠り1 …」のような複合状態を作って 1 ターン回す | 常時 |
-| fuzz | `test/fuzz/*.fuzz.test.js` | 自動プレイヤーで数百ラン。warn/error ゼロ、不変条件 (02)、進行不能なし、イベントのスナップショットの整合 (最後のスナップショット = コマンド後の state) | 共有コア変更時とコミット前 (`npm run test:fuzz`) |
+| fuzz | `test/fuzz/*.fuzz.test.js` | 自動プレイヤーで数百ラン。ボットは `select` で手を選び、それ以外のステップは `advance` を回す。warn/error ゼロ、不変条件 (02) を advance ごとに検査、進行不能なし (select にも battle.end にも着かないバトルを検出) | 共有コア変更時とコミット前 (`npm run test:fuzz`) |
 | master | `npm run selftest` | レジストリ駆動のマスタ検証 + ボット N ラン (勝率は参考値) | import.js 後に自動 |
 
-ハーネス (`test/harness/`): `runGame({characterId, bookId, seed, playProb, bot})`、`invariants.js` (毎コマンド検査)、`autoPlay.js` (queries だけを見て手を選ぶボット。UI と同じ情報しか使わない)、`explain.js` (失敗時に直前の state と events をダンプ)。
+ハーネス (`test/harness/`): `runGame({characterId, bookId, seed, playProb, bot})`、`runUntil(state, step)` (advance を回す)、`invariants.js` (毎コマンド検査)、`autoPlay.js` (queries だけを見て手を選ぶボット。UI と同じ情報しか使わない)、`explain.js` (失敗時に直前の state と outbox の一発物をダンプ)。outbox は購読で全部捕捉する。
 
 ## シナリオ DSL (案)
 
@@ -32,8 +32,8 @@ scenario("麻痺 2 は次の 2 回の攻撃で武器が使えない", (s) => {
 
 画面右に折りたたみ式のパネル。
 
-- **state ツリー**: `current` を JSON ツリーで表示。直前のコマンドで変わったパスを 2 秒光らせる (before/after の deep diff)
-- **コマンドとイベント**: 直前のコマンド名・引数・返り値、events のリスト (type と payload、view)
+- **state ツリー**: state を JSON ツリーで表示。直前のコマンド (advance 含む) で変わったパスを 2 秒光らせる (dispatch の前後で `JSON.parse(JSON.stringify())` した写しを deep diff。写しはインスペクタの中だけ)
+- **コマンドと一発物**: 直前のコマンド名・引数・返り値、そのコマンドで outbox に流れた一発物のリスト (type と payload)、いまの `battle.step`
 - **派生値の内訳**: attackPower / blockValue / maxHp / slotCount / turnOrder / 許可 (canAct, canActivateEquipment ...) を選んで内訳表示
 - **処理順ビューア**: ステップを選ぶと、いまの装備・レリック・ステート・本のルールで並ぶハンドラを order 順に表示
 - **操作**: state を JSON でコピー / 貼り付けて差し替え、乱数のリシード、デバッグ関数 (通貨、全回復、ステート付与、章スキップ、即勝利)

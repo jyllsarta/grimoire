@@ -1,18 +1,20 @@
 # 02 ラン状態 (GameState)
 
 ラン (1 回の挑戦) の状態は 1 本の JSON ツリー `GameState` だけで表す。**これがコアロジックの正本で、厳密レビューの対象**。
-ここに無いものはゲームの状態ではない (画面の状態、演出中フラグ、オプションは app 側)。進行データ (ラン外) は 06_save。
+ここに無いものはゲームの状態ではない (画面の状態、演出中フラグ、選択中の対象、オプションは app 側)。進行データ (ラン外) は 06_save。
 
 ## 原則
 
-1. **プレーンな JSON**。クラスインスタンス、関数、`undefined`、循環参照を持たない。`structuredClone` と `JSON.stringify` でそのまま複製・保存できる
-2. **参照共有なし**。オブジェクト間の関係は uid か マスタ id で指す。敵の状態は盤面パネルに置き、戦闘は `panelUid` で指す
-3. **語彙は key、カタログは id**。ステート・衣装・バフ・本のルールのような「語彙」は文字列 key で持つ (インスペクタとセーブが読める)。装備・アイテム・アビリティ・敵・レリック・イベントのような「カタログ」はマスタの数値 id で持つ。ロジックは id の値で分岐しない
-4. **派生値は持たない**。最大ライフ、攻撃力、ブロック値、スロット数、フェーズは毎回計算する (03 の派生値)。二重管理を避ける
-5. **スコープで置き場を決める**。章をまたいで残るものは `player` / `inventory` / `wallet` / `relics`、章の中だけは `board`、バトルの中だけは `battle`、ターンの中だけは `battle.turnMemo`
-6. **モジュール固有の記憶は memo に閉じ込める**。効果モジュールが覚えておきたい値 (腐るまでの戦闘数、コマンド時の HP など) は各スコープの `memo` に `"<family>.<key>"` を名前空間にして書く。インスペクタでそのまま見える
-7. **保留は state に置く**。インベントリあふれのような「UI の応答待ち」は `progress.pending` に置き、解決コマンドで消す。途中でセーブしても再開できる
-8. **命名**: 00 の規則。`characterId` は同一性、`player` / `enemy` は側。state の中に heroine という語は出ない
+1. **プレーンな JSON**。クラスインスタンス、関数、`undefined`、循環参照を持たない。`JSON.stringify` でそのまま保存できる。app は Vue の `reactive` で包んで晒し、core は包まれているかどうかを気にしない (01 の Proxy 3 規則)
+2. **実物は 1 本**。UI が読むのは常にこの state で、表示用の写しは作らない
+3. **参照共有なし**。オブジェクト間の関係は uid か マスタ id で指す。敵の状態は盤面パネルに置き、戦闘は `panelUid` で指す
+4. **語彙は key、カタログは id**。ステート・衣装・バフ・本のルールのような「語彙」は文字列 key で持つ (インスペクタとセーブが読める)。装備・アイテム・アビリティ・敵・レリック・イベントのような「カタログ」はマスタの数値 id で持つ。ロジックは id の値で分岐しない
+5. **派生値は持たない**。最大ライフ、攻撃力、ブロック値、スロット数、フェーズは毎回計算する (03 の派生値)。二重管理を避ける
+6. **スコープで置き場を決める**。章をまたいで残るものは `player` / `inventory` / `wallet` / `relics`、章の中だけは `board`、バトルの中だけは `battle`、ターンの中だけは `battle.turnMemo`
+7. **モジュール固有の記憶は memo に閉じ込める**。効果モジュールが覚えておきたい値 (腐るまでの戦闘数、コマンド時の HP など) は各スコープの `memo` に `"<family>.<key>"` を名前空間にして書く。インスペクタでそのまま見える
+8. **保留は state に置く**。インベントリあふれのような「UI の応答待ち」は `progress.pending` に置き、解決コマンドで消す。途中でセーブしても再開できる
+9. **バトルの進行も state に置く**。`battle.step` がターンのどこまで進んだかを持ち、`advance` が 1 つ進める。演出の途中でセーブしても続きから再開できる
+10. **命名**: 00 の規則。`characterId` は同一性、`player` / `enemy` は側。state の中に heroine という語は出ない
 
 ## 全体像
 
@@ -31,7 +33,7 @@ GameState
 ├ inventory                { entities: [{ uid, kind, defId, pos, durability, active?, ready?, progress?, memo }], concealed }
 ├ ownedPanels              [{ kind, defId }]                     幕間で買った所持済パネル (設計図。不利イベントも可)
 ├ board                    { chapterId, width, cells: [uid|null], panels: {uid: PanelInstance}, deck: [uid], boss: {uid, placed, defeated} }
-├ battle                   null | { panelUid, turn, started, result, shield, buffs, delayed, turnMemo, memo }
+├ battle                   null | { panelUid, step, cursor, turn, started, result, shield, buffs, delayed, turnMemo, memo }
 ├ shop                     null | { slots: [{kind, defId, soldOut, rare}], rerolls }
 ├ counters                 { harshness: {misfortunes, statusHits, crossBreaks}, battles, kills, turns, flees, chaptersCleared }
 └ memo                     ラン全体のモジュール記憶
@@ -158,13 +160,15 @@ EnemyState (kind=enemy のときだけ。**逃走してもここに残る**):
 | フィールド | 型 | 意味 |
 |---|---|---|
 | panelUid | int | 戦っている敵パネル。敵の状態は `board.panels[panelUid].enemy` |
-| turn | int | 1 始まり。ターン終了で +1 |
+| step | string | **ターンのどこまで進んだか** (03 のバトルステップ名がそのまま入る)。`select` が入力待ち、`battle.end` が終端。それ以外は app の StepMover が `advance` で進める責任を持つ |
+| cursor | int | `enemy.action` で次に解決するアクションの添字 (0 始まり)。他のステップでは 0 |
+| turn | int | 1 始まり。`turn.end` で +1 |
 | started | bool | 最初のターン消費行動 (攻撃 / 逃走 / フリーアクション) をしたら true。false の間はキャンセル無料 |
-| result | null / `victory` / `flee` / `defeat` | 決まったらバトルは終了扱い。`closeBattle` で battle が null に戻る (勝利なら盤面の処理は result 確定時に済んでいる) |
+| result | null / `victory` / `flee` / `defeat` | 動詞 (`damagePlayer` / `damageEnemy`) と `flee.done` が立てる。立ったら次の settle 点で step が `battle.victory` / `battle.defeat` / `battle.end` に移る (03) |
 | shield | int | このバトル中のシールド。ライフより先に削られる (毒は貫通) |
 | buffs | `{key, value, turns}[]` | プレイヤー側のバトルバフ。key は statuses.key (kind=buff)。turns は「自分の行動回数」で減る |
 | delayed | `{source, key, values}[]` | 次のターン開始時に発動する予約 (ディレイ系)。バトル終了で消える |
-| turnMemo | object | このターンだけの記憶。ターン終了で `{}`。既知キー: `abilitiesUsed`, `damageTakenThisTurn`, `skipPlayer` (眠りで手番スキップ)。モジュールは名前空間付きで追加できる |
+| turnMemo | object | このターンだけの記憶。`turn.end` で `{}`。既知キー: `order` (player / enemy。`turn.order` が決める)、`skipPlayer` (眠りで手番スキップ)、`fleeing` (逃走中)、`abilitiesUsed`、`damageTakenThisTurn`。モジュールは名前空間付きで追加できる |
 | memo | object | このバトルだけの記憶 |
 
 ### shop (幕間だけ)
@@ -202,27 +206,23 @@ shop != null             → intermission
 |---|---|---|
 | newRun(characterId, bookId, starSnapshot, difficulty, seed) | (state なし) | 全部 |
 | takePanel(cell) / takePanelArranged(cell, arrangement) / dumpPanel(cell) | chapter | board, inventory, wallet, pending |
-| startBattle(cell) | chapter | battle |
+| startBattle(cell) | chapter | battle (step = `battle.start`) |
 | chooseEvent(cell, choiceIndex) | chapter | board, wallet, player, inventory, counters, pending |
 | takeChapterClear(cell) | chapter | wallet, player, inventory, counters, そして shop (次章あり) か progress (最終章: 過酷さ判定で 達成 → stage=extra + shop / 未達 → ending=normal。Extra の章なら ending=happy) |
 | arrangeInventory(arrangement) | chapter, intermission | inventory |
-| useItem(uid) | battle。`items.usableOutOfBattle` のものは chapter / intermission でも | player, battle, inventory, board.panels[].enemy |
-| toggleEquip(uid) / useAbility(uid) | battle | inventory, battle, enemy |
-| attack() / flee() | battle | ほぼ全部 |
-| cancelBattle() | battle (started=false) | battle=null |
-| closeBattle() | battle (result != null) | battle=null |
+| useItem(uid) | battle (step = select)。`items.usableOutOfBattle` のものは chapter / intermission でも | player, battle, inventory, board.panels[].enemy |
+| toggleEquip(uid) / useAbility(uid) | battle (step = select) | inventory, battle, enemy |
+| attack() | battle (step = select) | step = `turn.command`、started |
+| flee() | battle (step = select) | step = `flee.command`、started |
+| advance() | battle (step が select でも battle.end でもない) | そのステップの分だけ (03)。1 回で 1 ステップ |
+| cancelBattle() | battle (step = select、started=false) | battle=null |
+| closeBattle() | battle (step = battle.end) | battle=null |
 | resolvePending(index, arrangement or discard) | pending | inventory, pending |
 | buyShopSlot(i) / rerollShop() / buyHeal() | intermission | shop, wallet, ownedPanels, relics, player.hp |
 | enterNextChapter() | intermission | progress (chapterIndex += 1)、board (次の章。stage が extra なら Extra Chapter)、wallet, inventory, shop=null |
 | giveUp() | chapter, intermission | ending=abandoned (戦績に数えない) |
 
-コマンドは `{ ok: true, events }` か `{ ok: false, reason }` を返す。reason は systemTexts のキーになる語 (`coins`, `paralyze`, `mustWithOtherWeapon` ...)。
-
-## イベントと state スナップショット
-
-コマンドが返す `events` は `{ type, ...payload, state }` の配列。`state` は emit した時点の GameState 全体の structuredClone (数十 KB × ターンあたり数十イベント。transient なので問題ない)。UI は演出中は `event.state` を、演出が終わったら `current` を描く。部分ビュー (BattleView) は持たない。詳細は 01「表示と state の同期」。
-
-イベント型の一覧 (v1 案) は 03 の末尾。
+コマンドは `{ ok: true }` か `{ ok: false, reason }` を返す。reason は systemTexts のキーになる語 (`coins`, `paralyze`, `mustWithOtherWeapon` ...)。一発物 (演出・音の要求) は返り値ではなく outbox に流れる (03「ctx の動詞」の `emit`)。
 
 ## 画面と state の対応
 
@@ -242,6 +242,7 @@ shop != null             → intermission
 | 戦闘: ライフ / シールド | `player.hp` / `battle.shield` |
 | 戦闘: 敵 HP / ブロック / ステート / スタン / 予告 / 行動メモ | `board.panels[battle.panelUid].enemy.*` + マスタ enemyActions |
 | 戦闘: ターン / 予約チップ / バフチップ | `battle.turn` / `battle.delayed` / `battle.buffs`, `enemy.buffs` |
+| 戦闘: いま何が起きているか (入力待ちか、演出中か、どの敵アクションか) | `battle.step` / `battle.cursor` / `battle.turnMemo.order` |
 | 攻撃ボタンの予測値 | 派生 `attackPower` の内訳 |
 | 攻撃ボタンの zzz 表示 (眠り) | 許可 `canAct` (= `player.statuses` の sleep) |
 | 幕間: ジュエル / クラウン / ショップ / 次章の山札 | `wallet.jewel / crown` / `shop.slots` / 派生 `chapterPanelSpecs(次章)` |
@@ -256,6 +257,7 @@ shop != null             → intermission
 - `inventory.entities` の占有マスが重ならず、`0 <= pos` かつ `pos + size <= slotCount`。pending 中の実体だけ pos=-1 で、それは `inventory.entities` に含まれない
 - `board.cells` の uid と `board.deck` の uid は重複せず、全部 `board.panels` にある。`panels` に孤児 (どこにもいない uid) がない
 - `battle.panelUid` は `board.cells` のどれかで、そのパネルは kind=enemy
+- `battle.step` は 03 のバトルステップ名のどれか。`cursor` は `enemy.action` のときだけ 0 以上 actions.length 以下、他は 0。`result` が立っているのに step が select のままになることはない
 - `player.statuses` の key は重複しない。value は 1 以上 (0 になったら消す)。`unique` の turns は 1 以上。敵の `statuses` も同じ
 - `player.unique` が他ヒロインの固有バステを指さない (付与時にスキップ済み)
 - `progress.pending` が空でない間は phase=pending
@@ -282,4 +284,4 @@ shop != null             → intermission
 - チップ列は statuses (マスタ order で並べ替え: 毒 → 眠り → 発情 → ねばねば) + 固有 (ds_unique1: 2)。衣装チップは unique 中なので出ない
 - SD は 固有バステの衣装レイヤー (`unique_ds_unique1.png`) + 表情 + 共通バステの重ね (毒 → 眠り → 発情 → ねばねば)
 - 攻撃力の内訳に「半クロスブレイク -1」は **出ない** (マスク中)。固有バステが切れたら `costume: "half"` がそのまま復活して出る
-- 攻撃ボタンは zzz。押すと手番をスキップして敵が行動し、その後 `player.act.end` で 眠り 1 → 0、発情 5 → 4、ねばねば 3 → 2、固有 2 → 1 に減る (毒は次の自分の行動前の tick で 3 ダメージ → 2)
+- 攻撃ボタンは zzz。押すと `battle.step` が `turn.command` → `player.tick` (毒 3 ダメージ、毒 3 → 2) → `turn.order` → `player.act.skipped` → `player.act.end` (眠り 1 → 0、発情 5 → 4、ねばねば 3 → 2、固有 2 → 1) → `enemy.act.begin` → … と 1 つずつ進み、画面はそのたびに実物の state を描く
