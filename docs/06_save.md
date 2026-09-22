@@ -19,11 +19,11 @@
   options: { bgmVolume, seVolume, masterVolume, lightWeightMode, ... },
   language: "ja_jp",
   characters: {
-    [heroineId]: {
+    [characterId]: {
       star: { activeNodeIds: [], lastPreset: null|easy|normal|hard },
       totalCrowns: 0,
       records: {
-        [bookId]: { tries, clears, normalEnds, happyEnds, losses, bestDelta: null|int, bestHappyDelta: null|int, ... [R2] }
+        [bookId]: { tries, normalEnds, happyEnds, losses, bestDelta: null|int, bestHappyDelta: null|int }
       },
       skitsRead: { [skitId]: true },
       misfortunesSeen: { [eventId]: true },
@@ -33,6 +33,7 @@
 }
 ```
 
+- 戦績: tries はラン開始時、normalEnds / happyEnds / losses は ending 確定時に +1 (Extra での敗北は losses と normalEnds の両方)。abandoned は tries だけ残り他は数えない。bestDelta は完走 (normal / happy) の最小 delta、bestHappyDelta は happy の最小 delta。ゲート `clearAny` は normalEnds + happyEnds、`happyAny` は happyEnds を見る
 - xqueens の `Savedata` と同じく、読み込み時に `migrate` を通して欠けたキーを埋める (テンプレートとの型比較で壊れを検出)
 - 進行データの初期化・エクスポート・インポートは「セーブ管理」ダイアログから (xqueens 準拠)
 
@@ -55,7 +56,7 @@
 
 - app の dispatch がコマンド成功後に `current` を書く。同期書き込みが重い環境では直近 1 件だけを保留してデバウンスするが、**次のコマンドの前には必ず書き終わっている** こと
 - 演出の途中で落ちた場合、再開は「コマンド完了後の状態」から。演出は再生しない
-- ランを放棄 (`giveUp`) したら run.json を消す。ending 確定後は progress に記録してから run.json を消す
+- ランを放棄 (`giveUp`, ending=abandoned) したら戦績には数えず run.json を消す。normal / happy / lose は progress に記録してから run.json を消す
 
 ## 開発用
 

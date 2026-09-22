@@ -29,20 +29,23 @@
 
 ### config (1 行)
 
-`title, startSlots, maxSlots, shopSlots (6), rerollPrice (2)`
+`title, startSlots, maxSlots, shopSlots (6), rerollPrice (2), harshnessWeightMisfortune (1), harshnessWeightStatus (1)`
 
 ### characters
 
-ヒロインとオラクルちゃん。
+登場人物は全部ここ (旧作と同じ命名)。**ヒロイン = 本を持つ character** (books.characterId で引く。xqueens の hasChapter と同じ発想)。オラクルちゃんも同じテーブルの 1 行で、本を持たないだけ。role のような列や oracle 専用の命名・分岐は持たず、立ち絵の表示ロジックも character 共通。
 
-`id, role (heroine|oracle), key (string。ステートのキーやスクリプトの参照名に使う), name, asKnownAs, description, hp, power, coins, imageId, bgmId, order, initialEquipmentIds, initialItemIds, initialAbilityIds, startEquipmentIds, startItemIds, startAbilityIds`
+`id, key (string。ステートのキーやスクリプトの参照名に使う), name, asKnownAs, description, hp, power, coins, imageId, bgmId, order, initialEquipmentIds, initialItemIds, initialAbilityIds, startEquipmentIds, startItemIds, startAbilityIds`
 
 - initial* は「キャラ固有パネル」(毎章、山札に入る設計図)、start* は「章開始時にインベントリにある」(プロト踏襲)
-- 当面 heroine は id 1 (デスサイズちゃん) のみ。oracle は id 0 案
+- 当面はデスサイズちゃん (id 1) とオラクルちゃん (id 0 案。本なし) のみ
 
 ### books
 
-`id, characterId (この本の持ち主 = 呪われたヒロイン), name, description, order, chapterIds, extraChapterId, harshnessThreshold [R2], bgmId, coverImage`
+`id, characterId (この本の持ち主 = 呪われたヒロイン), name, description, order, chapterIds, extraChapterId, harshnessThreshold, bgmId, coverImage, skin (インゲームのスキン key。2 キャラ目で作り込む)`
+
+- extraChapterId は通常の章と同じ形の chapters 行 (道中の敵 + ボス = 呪い本体)。最終章クリアで過酷さが閾値以上なら、幕間を挟んでこの章に入る
+- デスサイズちゃんの本は 3 章 + Extra
 
 ### bookRules
 
@@ -54,15 +57,15 @@
 
 `id, name, description, width, healPrice, clearJewelBonus, clearCrownBonus, enemyIds, bossEnemyId, equipmentIds, itemIds, abilityIds, eventIds, battleBg, bgmId`
 
-- Extra Chapter も chapters の行 (books.extraChapterId)。ボスだけの章なら enemyIds を空にする [R2]
+- Extra Chapter も chapters の行 (books.extraChapterId)。道中の敵がいて、bossEnemyId が呪い本体
 - enemyIds / eventIds には placeholder (下) を書ける
 
 ### enemies
 
-`id, kind (normal|placeholder|heroineUnique), slot (placeholder / heroineUnique: 1..4), characterId (heroineUnique のみ), name, description, icon, reward, hp`
+`id, kind (normal|placeholder|characterUnique), slot (placeholder / characterUnique: 1..4), characterId (characterUnique のみ), name, description, icon, reward, hp`
 
-- placeholder 行は 4 つ (slot 1..4)。章の enemyIds に書くとヒロインの同 slot の heroineUnique に置き換わる
-- ID の予約案: placeholder = 1..4、ヒロインの固有敵は `ヒロインid × 100 + slot` [R2]
+- placeholder 行は 4 つ (slot 1..4)。章の enemyIds に書くと挑戦中 character の同 slot の characterUnique に置き換わる
+- ID の予約: placeholder = 1..4、character の固有敵は `characterId × 100 + slot` (人間用の慣習)。Lv1 と Lv2 は別の行なので見た目も行動も違ってよい
 
 ### enemyActions
 
@@ -77,7 +80,9 @@
 
 ### items
 
-`id, characterId, name, description, icon, durability, type, values, cost, price, size, locked, usableOutOfBattle [R2]`
+`id, characterId, name, description, icon, durability, type, values, cost, price, size, locked, usableOutOfBattle`
+
+- usableOutOfBattle: 章画面と幕間でも使える (戦闘専用の効果は非戦闘時に使用不可)
 
 ### abilities
 
@@ -89,26 +94,28 @@
 
 ### statuses
 
-`id, key, kind (common|unique|costume|buff), polarity (bad|good|neutral), duration (stack|turn|permanent), characterId, name, description, icon, sdLayer, effect, values, next, order`
+`id, key, kind (common|unique|costume|buff), polarity (bad|good|neutral), side (player|enemy|both), duration (stack|turn|permanent), characterId, name, description, icon, sdLayer, effect, values, next, order`
 
 詳細は 04。
 
 ### events / eventChoices
 
-`events: id, kind (normal|misfortune|placeholder), slot (placeholder / ヒロイン固有: 1..2) [R2], characterId, name, description, icon, cutin (シーン素材キー), choiceIds`
+`events: id, kind (normal|misfortune|placeholder), slot (placeholder / ヒロイン固有: 1..2), characterId (-1 = 共通 / ヒロイン id), name, description, icon, cutin (カットイン素材キー), choiceIds, price (幕間で買えるもの)`
 `eventChoices: id, label, resultText, effects[i].type, effects[i].value`
 
-- 不利イベントの置き方 (章の eventIds に書く / 購入パネル / ヒロイン固有の placeholder) は R2
+- 置き方は 3 系統: (a) 章の eventIds に直接 (落とし穴、回復の泉など章の設計) (b) ヒロイン固有のドジ・不運は placeholder (slot 1..2) を章に置き、chapter.build で挑戦中ヒロインの同 slot に置き換える (c) 呪われ体質のものはスターパレットの `misfortuneCandidate` ノードで幕間の抽選候補に入り、買うと ownedPanels (kind=event) として毎章の山札に入る
+- 不利イベントの再生 (選択肢を選んで結果を適用) で `counters.harshness.misfortunes += 1`。覗いて戻るのは無料。1 択もあり
+- カットインは画面中央に軽く出るデフォルメ絵 (全画面ではない)。ヒロイン詳細から再閲覧できる
 
 ### starNodes / starPresets
 
-`starNodes`: プロト踏襲 (`id, characterId, kind (origin|node|gate), x, y, fromIds, effectType, values, delta, gateType, gateValue, name, description`)。name / description は本番では手書き
+`starNodes`: プロト踏襲 (`id, characterId, kind (origin|node|gate), x, y, fromIds, effectType, values, delta, gateType, gateValue, name, description`)。name / description は本番では手書き。効果 type の追加: `misfortuneCandidate [eventId]` (幕間の抽選候補に不利イベントを混ぜる)。ゲート type の追加: `happyAny` (ハッピーエンド 1 回)
 `starPresets`: `id, characterId, difficulty (easy|normal|hard), nodeIds, name, description` — 難易度ボタンで有効化するノード集合 (R1 Q28)
 
 ### skits / skitLines / characterScripts
 
 - `skits`: `id, characterId, key, type (talk|scene), trigger (opening|bookStart|bossBefore|bookClear|extraStart|happyEnd|normalEnd|lose ...), name, releaseByLose, order` [R2]
-- `skitLines`: `id, skitId, order, speaker (h|p|o|自由), faceId, text, imageId (scene 用), soundId`
+- `skitLines`: `id, skitId, order, speaker (characters.key か protagonist = おにーさん), faceId, text, imageId (scene 用), soundId`
 - `characterScripts`: `id, characterId, key, faceId, message, order` (tale と同じ。キーごとにランダム)
 
 ### systemTexts / tips / credits
@@ -120,4 +127,4 @@
 ## 検証 (selftest がやること)
 
 - id 重複、参照切れ (全 *Ids)、type ∈ レジストリ、values の個数・値域・refs、statuses の kind/duration/next、placeholder の解決可能性 (全ヒロイン × 全 slot)、開始インベントリがマスに入るか、starNodes のグラフ整合、systemTexts の網羅、chapters の bossEnemyId が placeholder でないこと (ボスは固定)
-- これに通らないマスタでゲームを起動しない
+- 通らなくても **起動はする** (マスタ入力の途中で部分的に動作確認したいため)。import.js と selftest は全部の問題を console に警告として並べ、dev ビルドはインスペクタに警告バッジを出す。CI (npm test) では失敗扱い。実行時に壊れた行へ実際に触れたら (参照切れなど) フォールバックせずそこで例外になる (AGENTS.md の方針)

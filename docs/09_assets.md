@@ -14,11 +14,11 @@
 | SD (駒) | `assets/characters/<characterId>/sd/wing.png`, `costume_<costumeKey>.png`, `unique_<statusKey>.png`, `face/<n>.png`, `status_<statusKey>.png`, `outline_<layerKey>.png` | outline は `tools/sd_outline.py` が生成 (衣装 / 固有ごと) |
 | オラクルちゃん | `assets/characters/0/stand/...` | 立ち絵のみ |
 | 敵アイコン | `assets/icons/<name>.gif` (24px ドット絵、流用) / `assets/icons/<name>.svg` (新規) | 01 のドット絵倍率規則 |
-| 図形・ノード・バステアイコン | app の SVG (コード) | 素材ではない |
+| 図形・ノード・バステアイコン | app の SVG (コード) | 素材ではない。仮のもので、いつか描き直す |
 | 背景 | `assets/backgrounds/<name>.png` | 章の battleBg、メニュー背景 |
 | スターパレット | `assets/star/<characterId>.outlines.js` (輪郭の折れ線、`tools/star_outline.py` 生成) | |
 | 一枚絵 | `grimoire_scenes/scene<skitId>_<n>.png` | xqueens と同じ命名 |
-| カットイン | `grimoire_scenes/cutin<eventId>.png` | 不利イベント |
+| カットイン | `grimoire_scenes/cutin<eventId>.png` | 不利イベント。画面中央に軽く出るデフォルメ絵 (全画面ではない)。透過 PNG、目安 480x480 |
 | 音 | `assets/sounds/se/<key>.ogg`, `assets/sounds/bgm/<key>.ogg` | ファイル一覧がマスタ (`app/sound/sound_master.js`)。ループ点はコード側 (xqueens の知見) |
 | フォント | `assets/fonts/NekoSpoon.ttf` ほか | |
 

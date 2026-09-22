@@ -8,21 +8,21 @@ core が Vue/DOM を持たないので、ほとんどの検証は node で回る
 |---|---|---|---|
 | unit | `test/unit/` | 効果モジュール 1 つ = 1 ファイル。派生値の内訳、許可、付与規則、順序 (`order.test.js`)、rng の再現性、serialize 往復 | 常時 (`npm test`、数秒) |
 | scenario | `test/scenario/` | 固定シードでコマンド列を打ち、state と events を検証する DSL。「毒3 眠り1 …」のような複合状態を作って 1 ターン回す | 常時 |
-| fuzz | `test/fuzz/*.fuzz.test.js` | 自動プレイヤーで数百ラン。warn/error ゼロ、不変条件 (02)、進行不能なし、view と state の一致 (プレビュー・オラクル) | 共有コア変更時とコミット前 (`npm run test:fuzz`) |
+| fuzz | `test/fuzz/*.fuzz.test.js` | 自動プレイヤーで数百ラン。warn/error ゼロ、不変条件 (02)、進行不能なし、イベントのスナップショットの整合 (最後のスナップショット = コマンド後の state) | 共有コア変更時とコミット前 (`npm run test:fuzz`) |
 | master | `npm run selftest` | レジストリ駆動のマスタ検証 + ボット N ラン (勝率は参考値) | import.js 後に自動 |
 
-ハーネス (`test/harness/`): `runGame({heroineId, bookId, seed, playProb, bot})`、`invariants.js` (毎コマンド検査)、`autoPlay.js` (queries だけを見て手を選ぶボット。UI と同じ情報しか使わない)、`explain.js` (失敗時に直前の state と events をダンプ)。
+ハーネス (`test/harness/`): `runGame({characterId, bookId, seed, playProb, bot})`、`invariants.js` (毎コマンド検査)、`autoPlay.js` (queries だけを見て手を選ぶボット。UI と同じ情報しか使わない)、`explain.js` (失敗時に直前の state と events をダンプ)。
 
 ## シナリオ DSL (案)
 
 ```js
 scenario("麻痺 2 は次の 2 回の攻撃で武器が使えない", (s) => {
-  s.start({ heroineId: 1, bookId: 1, seed: 7 }).fixture("battle", { enemy: 901 });
+  s.start({ characterId: 1, bookId: 1, seed: 7 }).fixture("battle", { enemy: 901 });
   s.enemyRoutine("paralyze 2");              // テスト用の敵の行動を差し込む
   s.attack();                                // 敵フェーズで麻痺 2
   expect(s.q.canActivateEquipment(s.weapon(0))).toEqual({ ok: false, reason: "paralyze" });
   s.attack(); s.attack();
-  expect(s.state.heroine.statuses).not.toContainEqual(expect.objectContaining({ key: "paralyze" }));
+  expect(s.state.player.statuses).not.toContainEqual(expect.objectContaining({ key: "paralyze" }));
 });
 ```
 
@@ -38,6 +38,7 @@ scenario("麻痺 2 は次の 2 回の攻撃で武器が使えない", (s) => {
 - **処理順ビューア**: ステップを選ぶと、いまの装備・レリック・ステート・本のルールで並ぶハンドラを order 順に表示
 - **操作**: state を JSON でコピー / 貼り付けて差し替え、乱数のリシード、デバッグ関数 (通貨、全回復、ステート付与、章スキップ、即勝利)
 - **不変条件**: 違反があれば赤く出す
+- **マスタ警告**: import / selftest が見つけたマスタの問題を一覧 (起動は止めない)
 - 実装は `app/inspector/` に閉じ、`__IS_PROD__` で丸ごと落とす
 
 レビューの道具として使う: 画面の要素 → state のパスを言い当てられるかを、インスペクタで確認する。

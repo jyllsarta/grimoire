@@ -48,12 +48,12 @@ grimoire/
         │   ├ timeline/       steps.js (ステップ一覧), standard.js (標準処理と order), bus.js (フック解決), derive.js (派生値)
         │   ├ effects/        index.js (明示順レジストリ) + statuses/ costumes/ bookRules/ passives/ relics/ star/ items/ abilities/ enemyActions/ eventEffects/
         │   ├ commands/       1 コマンド 1 ファイル + index.js (dispatch とフェーズ判定)
-        │   ├ domain/         board.js inventory.js battle.js chapter.js shop.js star.js heroine.js wallet.js (状態を動かす動詞)
+        │   ├ domain/         board.js inventory.js battle.js chapter.js shop.js star.js player.js wallet.js (状態を動かす動詞)
         │   ├ queries/        UI が読む問い合わせ (内訳、許可、山札の公開情報、リチャージ条件 ...)
-        │   ├ events.js       イベント生成と BattleView スナップショット
+        │   ├ events.js       イベント生成と state スナップショット
         │   └ run.js          newRun / serialize / deserialize / migrate
         ├ masterdata/         生成物。data/*.csv から tools/import.js が profile 別に生成し、コミットする
-        ├ app/                Vue 層: scenes/ dialogs/ components/ fragments/ stores/ sound/ inspector/ styles/
+        ├ app/                Vue 層: scenes/ dialogs/ components/ fragments/ stores/ sound/ inspector/ styles/ (tokens と本ごとの skins/)
         └ platform/           保存先アダプタ (Electron ファイル / localStorage)、エディションフラグ、ウィンドウ
 ```
 
@@ -74,13 +74,23 @@ grimoire/
 [入力] → app: run store の dispatch(command, args)
       → core: commands/index が phaseOf(state) で許可判定 → コマンド関数が state を直接書き換え、events を返す
       → app: current = structuredClone(state) を保存 (オートセーブもこれ)
-      → app: events を順に演出。戦闘中は event.view (BattleView) を表示に使い、演出が終わったら displayed = current
+      → app: events を順に演出。各イベントは「その時点の state 全体のスナップショット」を持ち、演出中は displayed = event.state、演出が終わったら displayed = current
 ```
 
-- core の state は Vue のリアクティブにしない (tricy の反省)。UI は「コマンド 1 回 = スナップショット 1 個」の粒度で再描画する。state は小さい (数十 KB) ので clone は無視できる
+- core の state は Vue のリアクティブにしない。UI は「コマンド 1 回 = スナップショット 1 個」の粒度で再描画する。state は小さい (数十 KB) ので clone は無視できる。tricy の反省の中身と、同期漏れを防ぐ規則は下の「表示と state の同期」
 - イベントは transient。state には残さない。セーブされるのは常にコマンド完了後の整合した state だけなので、演出の途中で落ちても再開は「コマンド後の状態」から始まる (演出は再生されない)
-- 盤面の落下や補充の演出は、イベントの payload (`panelFall` 等) と、displayed と current の盤面差分から組み立てる
+- 盤面の落下や補充の演出は、イベントの payload (`panelFall` 等) と、前後のスナップショットの盤面差分から組み立てる
 - 演出の待ち時間は app が持つ。core は秒数を知らない (tricy の反省)
+
+### 表示と state の同期
+
+画面が state とズレる経路を構造で潰す。
+
+- **UI が描くのは常に「本物の state のどれか」**。演出中は各イベントに付いた state スナップショット (`event.state`、emit 時点の structuredClone)、演出が終われば `current`。プロトの battleVm のような「手で更新する表示用の写し」は作らない。部分ビュー (BattleView) も作らない (欠けたフィールドが古いまま残る事故を無くす)
+- **表示に切り替える代入点は 1 箇所** (`run store` の `show(snapshot)`)。コンポーネントは state を props / inject で受けて描くだけで、state の値を自分の `data` に写さない (computed のみ)。これは lint とレビューで守る
+- state 側の更新点も 1 箇所 (`dispatch`)。デバッグ関数もコマンド経由
+- tricy の反省の具体: (1) エンジンが Vue の `reactive` を import してロジックが Vue 依存になり、node のテストにも Vue が要った (2) Proxy をロジックが触ると `===` の同一性、Map/Set のキー、`structuredClone` (Proxy は例外を投げる) で罠が出て `toRaw` が散らばる (3) 音や演出の要求を state 内のキューに積んで View が watch + flush する方式 (xqueens) は、View が居ないとキューが溜まる。tricy は購読方式にしてテストで捕捉しやすくなった (4) ロジック内の `after()` タイマーが演出秒数を知っていた
+- 代案 (xqueens 方式: state を deep reactive にしてロジックが直接触る) は同期漏れがゼロで実績もある。採らない理由は (1)(2) と、演出の中間状態 (ターンの途中) を見せるために結局「時間で区切って進めるロジック」が要ること。もしスナップショット方式が実装で辛ければ、コマンドを「ステップごとに yield する generator」にして app が間を空けて進める形 (xqueens の PhaseMover に近い) へ切り替えられるよう、コマンドの内部はステップ単位で書く
 
 ## 画面サイズ (R1 Q3 の提案)
 
@@ -93,20 +103,21 @@ transform: scale のステージフィットは実効解像度が落ちるので
 - 文字はウィンドウと一緒に大きくなるので「大きい窓で文字が相対的に小さい」問題は起きない。xqueens の zoomFactor (Electron 限定) は使わず、Web / Android も同じコードで動く
 - Electron のウィンドウ最小サイズは 1280x720 (content size)。Web でそれより小さければ k < 1 で縮む (縮小は避けられない)
 - DPR が 1 でない環境では zoom と DPR が合成される。立ち絵と SD は 2 倍以上の解像度で用意する (xqueens の 1600x2400 で足りる)
-- ドット絵アイコン (24px 系) は非整数倍で滲む。grimoire の新規アイコン (バステ、図形、ノード) は SVG で描き、既存 gif を使う場所は `--pixel-scale` (k×DPR を整数に丸めた倍率) でサイズを決めて `image-rendering: pixelated` にする。位置の端数ずれは許容
+- ドット絵アイコン (24px 系) は非整数倍で滲む。grimoire の新規アイコン (バステ、図形、ノード) は SVG で描き、既存 gif を使う場所は `--pixel-scale` (k×DPR を整数に丸めた倍率) でサイズを決めて `image-rendering: pixelated` にする。位置の端数ずれは許容。SVG は仮で、いつか描き直す
 - ユーザ設定「UI の大きさ」(0.8〜1.2 倍) を後から足せるよう、k の計算を 1 箇所 (`platform/viewport.js`) に閉じる
 
 代案として rem ベース (`html { font-size: calc(...) }` + 全寸法を rem) も成立するが、px のまま書ける zoom を採る。zoom が特定 WebView で崩れたら rem に切り替えられるよう、寸法は CSS 変数経由で書く。
 
 ## UI 構成 (Vue)
 
-- `scenes/`: Title / Opening / Menu / HeroineDetail (ダイアログでもよい) / BookSelect / InGame / Intermission / Result / StarPalette / StarEditor(dev)
-- `dialogs/`: Skit / Tips / Options / Savedata / Credits / Language / Confirm / Organize / PanelPeek / Desc (個体説明)
-- `components/`: Board, PanelCard, InventoryBar, EntityTile, LifePanel, StatusChips, BattlePanel, EnemyFigure, HeroineFigure (立ち絵), SdPiece (駒), Baloon, Shape (図形 SVG), Orn (飾り), Shop, DeckSummary ...
+- `scenes/`: Title / Opening / Menu / CharacterDetail (ダイアログでもよい) / BookSelect / InGame / Intermission / Result / StarPalette / StarEditor(dev)
+- `dialogs/`: Skit / Tips / Options / Savedata / Credits / Language / Confirm / Organize / PanelPeek / Detail (個体の詳細。ルール説明の Tips と対。Desc のような略名は使わない)
+- `components/`: Board, PanelCard, InventoryBar, EntityTile, LifePanel, StatusChips, BattlePanel, EnemyFigure, CharacterFigure (立ち絵。オラクルちゃんも同じ部品), SdPiece (駒), Baloon, Shape (図形 SVG), Ornament (飾り。OrnamentHead / OrnamentRule / OrnamentFoot), Shop, DeckSummary ...
 - `fragments/`: xqueens の FragmentManager 方式。core が `emit` したイベントを app 側の演出テーブルが Fragment (トースト、数字ポップ、カットイン) に変換する
 - `stores/`: `session` (scene, dialogs, options, language, 音量)、`run` (current / displayed / playing / queue / dispatch)、`inspector` (dev)
 - `sound/`: tricy の Vue 非依存 SoundManager (WebAudio、sound_master がファイル一覧)
-- スタイル: xqueens 準拠のトークン (色・フォントサイズ・角丸) を `styles/tokens.scss` に置き、tale の tonmana ルール (図形の色ファミリー、パネル形状、落ち影) を移植する。コンポーネントは scoped
+- スタイル: xqueens 準拠のトークン (色・フォントサイズ・角丸) を `styles/tokens.scss` に置き、tale の tonmana ルール (図形の色ファミリー、パネル形状、落ち影) を移植する。コンポーネントは scoped。いつか整える
+- **インゲームは本ごとに別のスキン** (本の表紙のテイストを中にも反映する)。スキン = トークンの上書き (CSS 変数の束) + 差し替え素材で、`books.skin` が選ぶ。コンポーネントはトークン以外の色・形を直書きしない。どこを可変にするか、表紙のデザインは 2 キャラ目の実装時に詰める
 
 ## エディション
 

@@ -9,9 +9,10 @@
 2. **参照共有なし**。オブジェクト間の関係は uid か マスタ id で指す。敵の状態は盤面パネルに置き、戦闘は `panelUid` で指す
 3. **語彙は key、カタログは id**。ステート・衣装・バフ・本のルールのような「語彙」は文字列 key で持つ (インスペクタとセーブが読める)。装備・アイテム・アビリティ・敵・レリック・イベントのような「カタログ」はマスタの数値 id で持つ。ロジックは id の値で分岐しない
 4. **派生値は持たない**。最大ライフ、攻撃力、ブロック値、スロット数、フェーズは毎回計算する (03 の派生値)。二重管理を避ける
-5. **スコープで置き場を決める**。章をまたいで残るものは `heroine` / `inventory` / `wallet` / `relics`、章の中だけは `board`、バトルの中だけは `battle`、ターンの中だけは `battle.turnMemo`
+5. **スコープで置き場を決める**。章をまたいで残るものは `player` / `inventory` / `wallet` / `relics`、章の中だけは `board`、バトルの中だけは `battle`、ターンの中だけは `battle.turnMemo`
 6. **モジュール固有の記憶は memo に閉じ込める**。効果モジュールが覚えておきたい値 (腐るまでの戦闘数、コマンド時の HP など) は各スコープの `memo` に `"<family>.<key>"` を名前空間にして書く。インスペクタでそのまま見える
 7. **保留は state に置く**。インベントリあふれのような「UI の応答待ち」は `progress.pending` に置き、解決コマンドで消す。途中でセーブしても再開できる
+8. **命名**: 00 の規則。`characterId` は同一性、`player` / `enemy` は側。state の中に heroine という語は出ない
 
 ## 全体像
 
@@ -20,19 +21,19 @@ GameState
 ├ schemaVersion            1
 ├ meta                     { createdAt, updatedAt, appVersion, edition, difficulty }
 ├ rng                      { seed, s: [u32 ×4] }              決定的乱数 (xoshiro128**)。全部の抽選がここを進める
-├ uidNext                  次に発行する uid
-├ heroineId, bookId        挑戦中のヒロインと本 (マスタ id)
+├ uidNext                  次に発行する uid (10001 から。見て uid と分かる値域)
+├ characterId, bookId      挑戦中のヒロイン (characters.id) と本 (books.id)
 ├ star                     { activeNodeIds, delta, effects: [{nodeId, type, values}], crownsGained }  ラン開始時のスナップショット。ラン中固定
-├ progress                 { chapterIndex, stage: main|extra, ending: null|normal|happy|lose, pending: [...] }
-├ heroine                  { hp, statuses: [{key, value}], unique: null|{key, turns}, costume }
+├ progress                 { chapterIndex, stage: main|extra, ending: null|normal|happy|lose|abandoned, pending: [...] }
+├ player                   { hp, statuses: [{key, value}], unique: null|{key, turns}, costume }   挑戦中 character の駒の状態
 ├ wallet                   { coin, jewel, crown }
 ├ relics                   [{ uid, defId, memo }]
 ├ inventory                { entities: [{ uid, kind, defId, pos, durability, active?, ready?, progress?, memo }], concealed }
-├ ownedPanels              [{ kind, defId }]                     幕間で買った所持済パネル (設計図)
-├ board                    { chapterId, width, cells: [uid|null], panels: {uid: PanelInstance}, pool: [uid], boss: {uid, placed, defeated} }
+├ ownedPanels              [{ kind, defId }]                     幕間で買った所持済パネル (設計図。不利イベントも可)
+├ board                    { chapterId, width, cells: [uid|null], panels: {uid: PanelInstance}, deck: [uid], boss: {uid, placed, defeated} }
 ├ battle                   null | { panelUid, turn, started, result, shield, buffs, delayed, turnMemo, memo }
 ├ shop                     null | { slots: [{kind, defId, soldOut, rare}], rerolls }
-├ counters                 { harshness: {misfortunes, statusHits}, battles, kills, turns, flees, chaptersCleared }
+├ counters                 { harshness: {misfortunes, statusHits, crossBreaks}, battles, kills, turns, flees, chaptersCleared }
 └ memo                     ラン全体のモジュール記憶
 ```
 
@@ -48,8 +49,8 @@ GameState
 | meta.difficulty | `easy`/`normal`/`hard`/null | プリセットで選んだ難易度の表示用ラベル。効果は star に焼き込み済みなのでロジックは見ない | newRun | — |
 | rng.seed | int | ラン開始時のシード (表示・再現用) | newRun | — |
 | rng.s | u32[4] | xoshiro128** の内部状態。乱数を引くたびに進む。**Math.random は core で禁止** | rng.js | — |
-| uidNext | int | インスタンス (パネル、実体、レリック) の連番。1 から | uid.js | — |
-| heroineId / bookId | int | characters.id (role=heroine) / books.id | newRun | — |
+| uidNext | int | インスタンス (パネル、実体、レリック) の連番。**10001 から** (知らない値を見たとき uid と判別できるように) | uid.js | — |
+| characterId / bookId | int | characters.id (本を持つ character = ヒロイン) / books.id | newRun | — |
 
 ### star (スターパレットのスナップショット)
 
@@ -64,9 +65,9 @@ GameState
 
 | フィールド | 型 | 意味 |
 |---|---|---|
-| chapterIndex | int | `books.chapterIds` の添字 (0 始まり)。stage が extra のときは最終章の値のまま |
-| stage | `main` / `extra` | Extra Chapter に入ったら extra。現在の章 id は `currentChapterId(state)` (query) が `stage` と `chapterIndex` から決める |
-| ending | null / `normal` / `happy` / `lose` | 決まったらラン終了。core は scene を知らないので、app が ending を見てリザルトへ遷移する |
+| chapterIndex | int | 章の列の添字 (0 始まり)。章の列 = `chapterSequence(state)` = `books.chapterIds` に、stage が extra なら `books.extraChapterId` を末尾に足したもの。Extra Chapter にいる間は `chapterIndex === chapterIds.length` |
+| stage | `main` / `extra` | 最終章クリア時に過酷さが閾値以上なら extra になる (その時点ではまだ幕間。`enterNextChapter` で Extra Chapter に入る)。現在の章 id は `currentChapterId(state)` = `chapterSequence(state)[chapterIndex]` |
+| ending | null / `normal` / `happy` / `lose` / `abandoned` | 決まったらラン終了。normal = 最終章クリアで閾値未達、happy = Extra Chapter のクリア、lose = 敗北 (Extra での敗北も lose だが戦績にはノーマル完走も残す)、abandoned = 自分で破棄 (戦績に数えない)。core は scene を知らないので、app が ending を見てリザルトへ遷移する |
 | pending | PendingRequest[] | UI の応答待ち。先頭から順に解決する。空でなければ `resolvePending` 以外のコマンドは拒否 |
 
 PendingRequest (v1 は 1 種類):
@@ -75,12 +76,12 @@ PendingRequest (v1 は 1 種類):
 { kind: "gain", entity: Entity (pos = -1), source: SourceRef }   // インベントリに入り切らなかった獲得物。解決 = 配置 (arrangement) か 受け取らない (discard)
 ```
 
-### heroine (章をまたぐヒロインの状態)
+### player (挑戦中 character の駒。章をまたぐ状態)
 
 | フィールド | 型 | 意味 | リセット |
 |---|---|---|---|
 | hp | int | 現在ライフ。0 で敗北。上限は派生値 `maxHp` | ランを通して持ち越し |
-| statuses | `{key, value}[]` | 共通ステート (バステと良性ステート)。key は statuses.key (kind=common)。value はそのステートの `duration` により **スタック数** (stack) / **残り行動回数** (turn) / **量** (permanent)。同じ key は 1 エントリだけ。並びは付与順 (表示順はマスタの order で並べ直す) | 章クリアで空 |
+| statuses | `{key, value}[]` | 共通ステート (バステと良性ステート)。key は statuses.key (kind=common、side が player / both)。value はそのステートの `duration` により **スタック数** (stack) / **残り行動回数** (turn) / **量** (permanent)。同じ key は 1 エントリだけ。並びは付与順 (表示順はマスタの order で並べ直す) | 章クリアで空 |
 | unique | null / `{key, turns}` | 固有バステ。**最大 1 つ**。付与は上書き。turns は残り行動回数 | 章クリアで null |
 | costume | string | 衣装の key (`normal` / `half` / `full` / `special1` ...)。statuses(kind=costume).key。unique が付いている間は表示も効果も **マスクされる** (04) | 章クリアで normal |
 
@@ -120,7 +121,7 @@ Entity:
 
 ### ownedPanels
 
-幕間で買った「所持済パネル」の設計図 `{kind, defId}`。章を組むたびに新しい実体として山札に入る。
+幕間で買った「所持済パネル」の設計図 `{kind, defId}`。kind は equipment / item / ability / event (呪われ体質の不利イベント)。章を組むたびに新しい実体として山札に入る。
 
 ### board (章の盤面)
 
@@ -130,7 +131,7 @@ Entity:
 | width | int | 列数。盤面は width×2 |
 | cells | (uid/null)[] | 長さ width×2。`0..width-1` が下段 (選べる)、`width..2width-1` が上段 (ネクスト)。列 c の上段は `c + width` |
 | panels | `{ [uid]: PanelInstance }` | 盤面と山札にある全パネル (取り除かれたら消す) |
-| pool | uid[] | 山札。順序に意味はなく、補充は rng で 1 つ選ぶ。公開情報 (内容と枚数) |
+| deck | uid[] | 山札。順序に意味はなく、補充は rng で 1 つ選ぶ。公開情報 (内容と枚数) |
 | boss | `{uid, placed, defeated}` | ボスパネル。山札が空になったら placed=true で上段に補充される |
 
 PanelInstance:
@@ -147,9 +148,9 @@ EnemyState (kind=enemy のときだけ。**逃走してもここに残る**):
 | routineIndex | 次に実行するルーチンの番号 (enemyActions の order 順で回る) |
 | stunned | 次の行動をスキップするか (パリィ / スタン付与) |
 | block | このラウンドのブロック (自分の行動開始で 0 に戻る) |
-| buffs | `{key, value, turns}[]`。敵側のバトルバフ (攻撃力ダウン等)。**バトルが終わっても残す** (逃走時の状態保持のため。仕様は R2) |
-| poison | 敵の毒スタック (敵に付く唯一のステート) |
-| abilityDamageTaken | 受けたアビリティ由来ダメージの累計 (サンダーストーム系が読む) |
+| statuses | `{key, value}[]`。敵側のステート (player.statuses と同じ形。statuses.side が enemy / both のもの)。v1 は毒だけだが、時止め・恒久攻撃力ダウンなどプレイヤー側の能力で付くものが増える前提。**逃走しても残す** (初期仕様 Q18「HP・ルーチン・ブロック・毒など全部そのまま残す」) |
+| buffs | `{key, value, turns}[]`。敵側のバトルバフ (攻撃力ダウン等)。同じく逃走しても残す |
+| damageTaken | `{tag, source: {family, key, defId, uid}, amount, turn}[]`。受けたダメージを **1 発ずつ発生源つき** で記録する (「スキル xx で与えたダメージの半分を与える」のような参照のため)。アビリティ由来の累計などは query が集計する。逃走しても残す |
 | memo | モジュール記憶 |
 
 ### battle (バトル中だけ)
@@ -161,28 +162,29 @@ EnemyState (kind=enemy のときだけ。**逃走してもここに残る**):
 | started | bool | 最初のターン消費行動 (攻撃 / 逃走 / フリーアクション) をしたら true。false の間はキャンセル無料 |
 | result | null / `victory` / `flee` / `defeat` | 決まったらバトルは終了扱い。`closeBattle` で battle が null に戻る (勝利なら盤面の処理は result 確定時に済んでいる) |
 | shield | int | このバトル中のシールド。ライフより先に削られる (毒は貫通) |
-| buffs | `{key, value, turns}[]` | ヒロイン側のバトルバフ。key は statuses.key (kind=buff)。turns は「自分の行動回数」で減る |
+| buffs | `{key, value, turns}[]` | プレイヤー側のバトルバフ。key は statuses.key (kind=buff)。turns は「自分の行動回数」で減る |
 | delayed | `{source, key, values}[]` | 次のターン開始時に発動する予約 (ディレイ系)。バトル終了で消える |
-| turnMemo | object | このターンだけの記憶。ターン終了で `{}`。既知キー: `abilitiesUsed`, `damageTakenThisTurn`, `skipHeroine` (眠りで手番スキップ)。モジュールは名前空間付きで追加できる |
+| turnMemo | object | このターンだけの記憶。ターン終了で `{}`。既知キー: `abilitiesUsed`, `damageTakenThisTurn`, `skipPlayer` (眠りで手番スキップ)。モジュールは名前空間付きで追加できる |
 | memo | object | このバトルだけの記憶 |
 
 ### shop (幕間だけ)
 
-`{ slots: [{kind: equipment|item|ability|relic, defId, soldOut, rare}], rerolls }`。抽選規則はプロト踏襲 (05 の config と 03 の派生値 `shopLayout`)。
+`{ slots: [{kind: equipment|item|ability|event|relic, defId, soldOut, rare}], rerolls }`。抽選規則はプロト踏襲 (05 の config と 03 の派生値 `shopLayout`)。event はスターパレットの不利ノードで候補に入った呪われ体質の不利イベント (買うと ownedPanels に入る)。
 
 ### counters (ラン内の累計)
 
 | フィールド | 意味 |
 |---|---|
 | harshness.misfortunes | 再生した不利イベントの回数 |
-| harshness.statusHits | バトル中に状態異常を付与された回数 (数え方は R2) |
+| harshness.statusHits | 状態異常 (bad) を付与された回数。重ね掛けも各 1、固有バステも含む、他ヒロインのスキップは数えない |
+| harshness.crossBreaks | クロスブレイクで衣装状態が実際に変わった回数 (full → full や固有バステ中の無効化は数えない) |
 | battles / kills / turns / flees / chaptersCleared | 統計と実績・ゲート判定用 |
 
-過酷さの判定 = `harshness` と `books.harshnessThreshold` を派生値 `harshnessScore` で比べる (式は R2)。
+過酷さの判定 = 派生値 `harshnessScore` (= misfortunes × config.harshnessWeightMisfortune + (statusHits + crossBreaks) × config.harshnessWeightStatus) と `books.harshnessThreshold` を比べる。
 
 ### memo
 
-ラン全体のモジュール記憶。例: `"bookRule.armorForbidden"` は記憶不要、`"relic.powerOnKill": {count: 2}`。
+ラン全体のモジュール記憶。例: `"bookRule.armorForbidden"` は記憶不要、`"relic.powerOnKill": {count: 2}`、`"status.confusion": {pendingDeactivate: true}` (次の turn.start で全装備 OFF する予約)。
 
 ## フェーズ (派生) とコマンド許可
 
@@ -198,38 +200,27 @@ shop != null             → intermission
 
 | コマンド | 許可フェーズ | 変えるもの |
 |---|---|---|
-| newRun(heroineId, bookId, starSnapshot, difficulty, seed) | (state なし) | 全部 |
+| newRun(characterId, bookId, starSnapshot, difficulty, seed) | (state なし) | 全部 |
 | takePanel(cell) / takePanelArranged(cell, arrangement) / dumpPanel(cell) | chapter | board, inventory, wallet, pending |
 | startBattle(cell) | chapter | battle |
-| chooseEvent(cell, choiceIndex) | chapter | board, wallet, heroine, inventory, counters, pending |
-| takeChapterClear(cell) | chapter | wallet, heroine, inventory, shop / progress, board (Extra) |
+| chooseEvent(cell, choiceIndex) | chapter | board, wallet, player, inventory, counters, pending |
+| takeChapterClear(cell) | chapter | wallet, player, inventory, counters, そして shop (次章あり) か progress (最終章: 過酷さ判定で 達成 → stage=extra + shop / 未達 → ending=normal。Extra の章なら ending=happy) |
 | arrangeInventory(arrangement) | chapter, intermission | inventory |
-| useItem(uid) | battle (chapter も可にする案 [R2]) | heroine, battle, inventory, board.panels[].enemy |
+| useItem(uid) | battle。`items.usableOutOfBattle` のものは chapter / intermission でも | player, battle, inventory, board.panels[].enemy |
 | toggleEquip(uid) / useAbility(uid) | battle | inventory, battle, enemy |
 | attack() / flee() | battle | ほぼ全部 |
 | cancelBattle() | battle (started=false) | battle=null |
 | closeBattle() | battle (result != null) | battle=null |
 | resolvePending(index, arrangement or discard) | pending | inventory, pending |
-| buyShopSlot(i) / rerollShop() / buyHeal() | intermission | shop, wallet, ownedPanels, relics, heroine.hp |
-| enterNextChapter() | intermission | progress, board, wallet, inventory, shop=null |
-| giveUp() | chapter, intermission | ending=lose [R2] |
+| buyShopSlot(i) / rerollShop() / buyHeal() | intermission | shop, wallet, ownedPanels, relics, player.hp |
+| enterNextChapter() | intermission | progress (chapterIndex += 1)、board (次の章。stage が extra なら Extra Chapter)、wallet, inventory, shop=null |
+| giveUp() | chapter, intermission | ending=abandoned (戦績に数えない) |
 
 コマンドは `{ ok: true, events }` か `{ ok: false, reason }` を返す。reason は systemTexts のキーになる語 (`coins`, `paralyze`, `mustWithOtherWeapon` ...)。
 
-## イベントと BattleView
+## イベントと state スナップショット
 
-コマンドが返す `events` は `{ type, ...payload, view? }` の配列。`view` は戦闘の表示に必要な値のスナップショット (BattleView) で、戦闘中に表示が変わるイベントに付く。UI は演出中 `view` を描き、演出が終わったら `current` を描く。
-
-```
-BattleView {
-  turn,
-  heroine: { hp, shield, statuses, unique, costume, buffs },
-  enemy:   { hp, block, poison, stunned, routineIndex, buffs },
-  delayed,
-  inventory: [{ uid, durability, active, ready, progress }],
-  wallet: { coin },
-}
-```
+コマンドが返す `events` は `{ type, ...payload, state }` の配列。`state` は emit した時点の GameState 全体の structuredClone (数十 KB × ターンあたり数十イベント。transient なので問題ない)。UI は演出中は `event.state` を、演出が終わったら `current` を描く。部分ビュー (BattleView) は持たない。詳細は 01「表示と state の同期」。
 
 イベント型の一覧 (v1 案) は 03 の末尾。
 
@@ -240,39 +231,42 @@ BattleView {
 | 画面の要素 | state |
 |---|---|
 | 左上の章名 / 本名 | `bookId`, `currentChapterId(state)` → マスタ |
-| 残パネル / 残モンスター数 | `board.pool` の内訳 + `board.cells` + `board.boss.placed` |
-| ライフ数値と目盛 | `heroine.hp` / 派生 `maxHp` |
+| 残パネル / 残モンスター数 | `board.deck` の内訳 + `board.cells` + `board.boss.placed` |
+| ライフ数値と目盛 | `player.hp` / 派生 `maxHp` |
 | レリック列 | `relics[]` |
-| ステートチップ列 | `heroine.statuses` + `heroine.unique` + (`heroine.costume` が normal 以外ならそのチップ、unique 中は非表示) |
+| ステートチップ列 | `player.statuses` + `player.unique` + (`player.costume` が normal 以外ならそのチップ、unique 中は非表示) |
 | コイン (菱形) | `wallet.coin` |
 | 盤面 (幅×2) | `board.cells[i]` → `board.panels[uid]` |
-| 敵パネルの HP / 毒 / 予告 | `board.panels[uid].enemy.hp / poison / routineIndex` |
+| 敵パネルの HP / ステートチップ / 予告 | `board.panels[uid].enemy.hp / statuses / routineIndex` |
 | インベントリ帯 | `inventory.entities` (pos, active, durability, ready, progress)、`inventory.concealed` |
-| 戦闘: ライフ / シールド | `heroine.hp` / `battle.shield` |
-| 戦闘: 敵 HP / ブロック / 毒 / スタン / 予告 / 行動メモ | `board.panels[battle.panelUid].enemy.*` + マスタ enemyActions |
+| 戦闘: ライフ / シールド | `player.hp` / `battle.shield` |
+| 戦闘: 敵 HP / ブロック / ステート / スタン / 予告 / 行動メモ | `board.panels[battle.panelUid].enemy.*` + マスタ enemyActions |
 | 戦闘: ターン / 予約チップ / バフチップ | `battle.turn` / `battle.delayed` / `battle.buffs`, `enemy.buffs` |
 | 攻撃ボタンの予測値 | 派生 `attackPower` の内訳 |
+| 攻撃ボタンの zzz 表示 (眠り) | 許可 `canAct` (= `player.statuses` の sleep) |
 | 幕間: ジュエル / クラウン / ショップ / 次章の山札 | `wallet.jewel / crown` / `shop.slots` / 派生 `chapterPanelSpecs(次章)` |
 | 強制整理ダイアログ | `progress.pending[0]` |
-| 過酷さメーター | `counters.harshness` と `books.harshnessThreshold` |
+| 過酷さメーター (本の要求) | 派生 `harshnessScore` (← `counters.harshness`) と `books.harshnessThreshold` |
+| 本のルールの表示 | `bookId` → マスタ bookRules |
 | リザルト | `progress.ending`, `star`, `counters` |
 
 ## 不変条件 (テストとインスペクタが毎コマンド検査する)
 
-- `heroine.hp` は 0 以上 `maxHp` 以下。`wallet.*` は 0 以上
+- `player.hp` は 0 以上 `maxHp` 以下。`wallet.*` は 0 以上
 - `inventory.entities` の占有マスが重ならず、`0 <= pos` かつ `pos + size <= slotCount`。pending 中の実体だけ pos=-1 で、それは `inventory.entities` に含まれない
-- `board.cells` の uid と `board.pool` の uid は重複せず、全部 `board.panels` にある。`panels` に孤児 (どこにもいない uid) がない
+- `board.cells` の uid と `board.deck` の uid は重複せず、全部 `board.panels` にある。`panels` に孤児 (どこにもいない uid) がない
 - `battle.panelUid` は `board.cells` のどれかで、そのパネルは kind=enemy
-- `heroine.statuses` の key は重複しない。value は 1 以上 (0 になったら消す)。`unique` の turns は 1 以上
-- `heroine.unique` が他ヒロインの固有バステを指さない (付与時にスキップ済み)
+- `player.statuses` の key は重複しない。value は 1 以上 (0 になったら消す)。`unique` の turns は 1 以上。敵の `statuses` も同じ
+- `player.unique` が他ヒロインの固有バステを指さない (付与時にスキップ済み)
 - `progress.pending` が空でない間は phase=pending
 - 全部のフィールドが JSON で往復して同値 (`JSON.parse(JSON.stringify(s))` が deepEqual)
-- `uidNext` は既存の全 uid より大きい
+- `uidNext` は既存の全 uid より大きく、10001 以上
+- `progress.stage` が main なら `chapterIndex < chapterIds.length`、extra なら `chapterIndex <= chapterIds.length`
 
 ## 例: 「毒3, 眠り1, 発情5, ねばねば3, 固有1バステが2, 半クロスブレイク」
 
 ```json
-"heroine": {
+"player": {
   "hp": 17,
   "statuses": [
     { "key": "poison",  "value": 3 },
@@ -288,3 +282,4 @@ BattleView {
 - チップ列は statuses (マスタ order で並べ替え: 毒 → 眠り → 発情 → ねばねば) + 固有 (ds_unique1: 2)。衣装チップは unique 中なので出ない
 - SD は 固有バステの衣装レイヤー (`unique_ds_unique1.png`) + 表情 + 共通バステの重ね (毒 → 眠り → 発情 → ねばねば)
 - 攻撃力の内訳に「半クロスブレイク -1」は **出ない** (マスク中)。固有バステが切れたら `costume: "half"` がそのまま復活して出る
+- 攻撃ボタンは zzz。押すと手番をスキップして敵が行動し、その後 `player.act.end` で 眠り 1 → 0、発情 5 → 4、ねばねば 3 → 2、固有 2 → 1 に減る (毒は次の自分の行動前の tick で 3 ダメージ → 2)
