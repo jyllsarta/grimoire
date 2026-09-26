@@ -9,9 +9,10 @@ import { fragmentStore, removeFragment } from "./fragment_store.js";
 import MessageBar from "./MessageBar.vue";
 import Toast from "./Toast.vue";
 import NumberPop from "./NumberPop.vue";
+import Cutin from "./Cutin.vue";
 
 // フラグメント type → コンポーネント。演出を増やす時はここに足す
-const registry = { MessageBar, Toast, NumberPop };
+const registry = { MessageBar, Toast, NumberPop, Cutin };
 
 function componentFor(type) {
   const component = registry[type];

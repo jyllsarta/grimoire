@@ -40,7 +40,16 @@ export const DELAYS = {
   enemyRoutineStart: 300,
   enemyStunned: 500,
   enemyAttack: 500,
+  enemyAttackNegated: 400,
+  evade: 200,
   enemyBlock: 300,
+  enemyShield: 300,
+  enemyShieldAbsorb: 150,
+  lethalScythe: 700,
+  justLethal: 300,
+  bookRuleProc: 300,
+  statusConsume: 100,
+  loseEntities: 500,
   enemyRest: 400,
   enemySelfHarm: 400,
   enemyPoisonTick: 350,
@@ -58,6 +67,9 @@ export const DELAYS = {
 };
 
 export const MIN_STEP_MS = 120;
+
+// 勝利で battle.end に着いてから、StepMover が closeBattle を自動で打つまでの間 (勝利トーストとセリフを見せる時間)
+export const VICTORY_CLOSE_MS = 1100;
 
 // そのステップで出た一発物の列から待ち時間を求める。speed は倍率 (1 = 通常、高速化は 0.4 など)
 export function delayFor(events, speed = 1) {

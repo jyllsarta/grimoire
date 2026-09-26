@@ -51,11 +51,14 @@ function store() {
   return (storage ||= createDefaultStorage());
 }
 
+let dialogUid = 1;
+
 export const useSessionStore = defineStore("session", {
   state: () => ({
     scene: "title",
     sceneParams: {},
-    dialogs: {},
+    // 開いているダイアログのスタック (後に開いたものが手前)。{ id, name, params, resolve }
+    dialogs: [],
     progress: initialProgress(),
     hasRunSave: false,
     loaded: false,
@@ -66,20 +69,32 @@ export const useSessionStore = defineStore("session", {
     options: (s) => s.progress.options,
     language: (s) => s.progress.language,
     speed: (s) => (s.progress.options.fastBattle ? 0.4 : 1),
+    topDialog: (s) => s.dialogs[s.dialogs.length - 1] ?? null,
   },
   actions: {
     setScene(scene, params = {}) {
       this.scene = scene;
       this.sceneParams = params;
     },
+    // ダイアログを開く。閉じるときの値で解決する Promise を返す (スキットの終了待ちなどに使う)
     openDialog(name, params = {}) {
-      this.dialogs[name] = { show: true, params };
+      let resolve = null;
+      const promise = new Promise((r) => (resolve = r));
+      this.dialogs.push({ id: dialogUid++, name, params, resolve });
+      return promise;
     },
-    closeDialog(name) {
-      if (this.dialogs[name]) this.dialogs[name].show = false;
+    closeDialog(idOrName, result = null) {
+      const i =
+        typeof idOrName === "number" ? this.dialogs.findIndex((d) => d.id === idOrName) : this.dialogs.map((d) => d.name).lastIndexOf(idOrName);
+      if (i < 0) return;
+      const [d] = this.dialogs.splice(i, 1);
+      d.resolve?.(result);
+    },
+    closeAllDialogs() {
+      for (const d of this.dialogs.splice(0)) d.resolve?.(null);
     },
     isDialogOpen(name) {
-      return !!this.dialogs[name]?.show;
+      return this.dialogs.some((d) => d.name === name);
     },
     setBgm(key) {
       this.bgm = key;
@@ -149,6 +164,25 @@ export const useSessionStore = defineStore("session", {
       await this.save();
       await store().remove("run");
       this.hasRunSave = false;
+    },
+    // スターパレット (06 progress.characters[cid].star)
+    async setActiveNodeIds(characterId, ids, preset = null) {
+      const c = this.characterProgress(characterId);
+      c.star.activeNodeIds = [...ids];
+      if (preset !== undefined) c.star.lastPreset = preset;
+      await this.save();
+    },
+    async markSkitRead(characterId, skitId) {
+      this.characterProgress(characterId).skitsRead[skitId] = true;
+      await this.save();
+    },
+    async markMisfortuneSeen(characterId, eventId) {
+      this.characterProgress(characterId).misfortunesSeen[eventId] = true;
+      await this.save();
+    },
+    async setFlag(name, value = true) {
+      this.progress.flags[name] = value;
+      await this.save();
     },
     // ランのオートセーブ (06): コマンド成功のたび
     async saveRun(json) {

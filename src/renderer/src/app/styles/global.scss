@@ -1,4 +1,4 @@
-// リセットと汎用クラス (tale の style.css の汎用部分)
+// リセットと汎用クラス (tale の style.css の汎用部分を移植)。色・角丸・フォントは tokens.scss の変数だけを使う
 @use "./tokens.scss";
 
 @font-face {
@@ -40,7 +40,7 @@ button {
   font-size: inherit;
 }
 
-// パネルは基本「落ち影」で前後関係を出す
+// パネルは基本「落ち影」(右下方向、SD の駒の drop-shadow と同じ向き) で前後関係を出す
 .panel_glass {
   background: linear-gradient(160deg, rgba(58, 47, 41, 0.92), rgba(31, 27, 25, 0.94));
   border: 1px solid var(--color-base1);
@@ -60,7 +60,9 @@ button {
   white-space: nowrap;
 }
 
+// 汎用ボタン: 内側に細い線 + 文字の両端に小さな菱形 (tale)
 .btn {
+  position: relative;
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -71,18 +73,32 @@ button {
   padding: 10px 26px;
   background: linear-gradient(180deg, var(--color-main2), var(--color-main4));
   color: var(--color-base5);
+  outline: 1px solid rgba(255, 241, 216, 0.45);
+  outline-offset: -4px;
   box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.35),
     0 3px 0 rgba(0, 0, 0, 0.35),
-    0 6px 14px rgba(0, 0, 0, 0.35);
+    0 6px 5px #000;
   transition:
     transform 0.08s ease,
     filter 0.12s ease;
 
+  &::before,
+  &::after {
+    content: "";
+    flex: none;
+    width: 6px;
+    height: 6px;
+    background: currentColor;
+    opacity: 0.55;
+    transform: rotate(45deg);
+  }
   &:hover {
-    filter: brightness(1.08);
+    filter: brightness(1.1);
+    transform: translateY(-1px);
   }
   &:active {
-    transform: translateY(2px);
+    transform: translateY(1px);
   }
   &:disabled,
   &.disabled {
@@ -90,18 +106,87 @@ button {
     cursor: default;
     transform: none;
   }
+  &.cannot {
+    filter: saturate(0.4) brightness(0.75);
+  }
   &.sub {
     background: linear-gradient(180deg, var(--color-base2), var(--color-base4));
     color: var(--color-white);
     border: 1px solid var(--color-base1);
+    outline-color: rgba(221, 181, 107, 0.35);
+    box-shadow:
+      inset 0 1px 0 rgba(255, 255, 255, 0.12),
+      0 3px 0 rgba(0, 0, 0, 0.35),
+      0 6px 5px #000;
+    &::before,
+    &::after {
+      background: var(--color-main3);
+      opacity: 0.8;
+    }
   }
   &.danger {
     background: linear-gradient(180deg, var(--color-negative2), var(--color-negative4));
     color: var(--color-white0);
+    outline-color: rgba(255, 218, 226, 0.4);
+  }
+  &.big {
+    font-size: var(--font-size-large);
+    padding: 14px 42px;
+    gap: 12px;
+    &::before,
+    &::after {
+      width: 8px;
+      height: 8px;
+    }
   }
   &.small {
-    padding: 4px 12px;
+    padding: 4px 14px;
     font-size: var(--font-size-small);
+  }
+  &.mini {
+    padding: 5px 12px;
+    font-size: var(--font-size-mini);
+    &::before,
+    &::after {
+      display: none;
+    }
+  }
+  &.bare::before,
+  &.bare::after {
+    display: none;
+  }
+}
+
+// 飾り枠: パネルの内側に細い線 + 四隅に小さな菱形 (カード・ダイアログ・スキット窓)
+.orn_frame {
+  position: relative;
+  &::before {
+    content: "";
+    position: absolute;
+    inset: 7px;
+    border: 1px solid var(--color-main3);
+    opacity: 0.4;
+    border-radius: calc(var(--radius-panel) - 5px);
+    pointer-events: none;
+  }
+  &::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    opacity: 0.85;
+    background-image:
+      url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 10 10'><path d='M5 0 L10 5 L5 10 L0 5 Z' fill='%23ddb56b'/></svg>"),
+      url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 10 10'><path d='M5 0 L10 5 L5 10 L0 5 Z' fill='%23ddb56b'/></svg>"),
+      url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 10 10'><path d='M5 0 L10 5 L5 10 L0 5 Z' fill='%23ddb56b'/></svg>"),
+      url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 10 10'><path d='M5 0 L10 5 L5 10 L0 5 Z' fill='%23ddb56b'/></svg>");
+    background-repeat: no-repeat;
+    background-size: 8px 8px;
+    background-position:
+      3px 3px,
+      calc(100% - 3px) 3px,
+      3px calc(100% - 3px),
+      calc(100% - 3px) calc(100% - 3px);
   }
 }
 
@@ -124,7 +209,268 @@ button {
   }
 }
 
-// ドット絵アイコン (24px 系) は --pixel-scale で整数倍にして滲ませない
-.pixel_icon {
+// ドット絵アイコン (24px 系) は滲ませない
+.pixel_icon,
+.icon_img {
   image-rendering: pixelated;
+}
+
+// 通貨などの小さな数字つきチップ
+.stat_chunk {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  img {
+    width: 30px;
+    height: 30px;
+  }
+  .value {
+    font-size: var(--font-size-medium);
+    color: var(--color-main1);
+  }
+  &.jewel_chunk .value {
+    color: var(--color-positive1);
+  }
+  &.crown_chunk .value {
+    color: var(--color-main1);
+  }
+}
+
+// シーン共通
+.scene {
+  position: absolute;
+  inset: 0;
+}
+.scene_bg {
+  position: absolute;
+  inset: 0;
+  background-size: cover;
+  background-position: center;
+  &.dim::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(180deg, rgba(31, 27, 25, 0.55), rgba(31, 27, 25, 0.75));
+  }
+  &.strong_dim::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(180deg, rgba(31, 27, 25, 0.72), rgba(31, 27, 25, 0.88));
+  }
+}
+.back_btn {
+  position: absolute;
+  left: 24px;
+  bottom: 20px;
+}
+
+// 覗き見ダイアログの中身 (PanelPeek / Detail / Event で共通)
+.peek_head {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+.peek_icon {
+  width: 92px;
+  height: 92px;
+  border-radius: var(--radius-card);
+  background: var(--color-base4);
+  border: 2px solid var(--color-base1);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex: none;
+  img {
+    width: 68px;
+    height: 68px;
+  }
+}
+.peek_title {
+  font-size: var(--font-size-large);
+  color: var(--color-main1);
+}
+.peek_desc {
+  margin-top: 4px;
+  color: var(--color-white2);
+  font-size: var(--font-size-small);
+  line-height: 1.5;
+}
+.peek_body {
+  margin-top: 18px;
+  line-height: 1.7;
+}
+.peek_buttons {
+  margin-top: 22px;
+  display: flex;
+  justify-content: center;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+.desc_stat {
+  margin-top: 12px;
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  font-size: var(--font-size-small);
+  span {
+    padding: 2px 10px;
+    border-radius: var(--radius-round);
+    background: var(--color-base4);
+    border: 1px solid var(--color-base1);
+    color: var(--color-main1);
+  }
+}
+
+// 登場アニメーション (tale)
+@keyframes trans_left_in {
+  from {
+    transform: translateX(-60px);
+    opacity: 0;
+  }
+  to {
+    transform: none;
+    opacity: 1;
+  }
+}
+@keyframes trans_right_in {
+  from {
+    transform: translateX(60px);
+    opacity: 0;
+  }
+  to {
+    transform: none;
+    opacity: 1;
+  }
+}
+@keyframes trans_drop_in {
+  from {
+    transform: translateY(-46px);
+    opacity: 0;
+  }
+  to {
+    transform: none;
+    opacity: 1;
+  }
+}
+@keyframes trans_raise_in {
+  from {
+    transform: translateY(46px);
+    opacity: 0;
+  }
+  to {
+    transform: none;
+    opacity: 1;
+  }
+}
+@keyframes pop_in {
+  0% {
+    transform: scale(0.7);
+    opacity: 0;
+  }
+  60% {
+    transform: scale(1.06);
+    opacity: 1;
+  }
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+.trans_left_in {
+  animation: trans_left_in 0.4s ease both;
+}
+.trans_right_in {
+  animation: trans_right_in 0.4s ease both;
+}
+.trans_drop_in {
+  animation: trans_drop_in 0.4s ease both;
+}
+.trans_raise_in {
+  animation: trans_raise_in 0.4s ease both;
+}
+.pop_in {
+  animation: pop_in 0.28s ease both;
+}
+.delay_1 {
+  animation-delay: 0.06s;
+}
+.delay_2 {
+  animation-delay: 0.12s;
+}
+.delay_3 {
+  animation-delay: 0.18s;
+}
+.delay_4 {
+  animation-delay: 0.24s;
+}
+.delay_5 {
+  animation-delay: 0.3s;
+}
+.delay_6 {
+  animation-delay: 0.36s;
+}
+
+@keyframes shake {
+  0%,
+  100% {
+    transform: translate(0, 0);
+  }
+  20% {
+    transform: translate(-10px, 4px);
+  }
+  40% {
+    transform: translate(8px, -4px);
+  }
+  60% {
+    transform: translate(-6px, 2px);
+  }
+  80% {
+    transform: translate(4px, -2px);
+  }
+}
+.shake {
+  animation: shake 0.4s ease;
+}
+
+// ふわふわ (xqueens TouchableCharacter 準拠: 羽は 4.5s で上下、体は 4.1s で -10px)
+@keyframes float_wing {
+  from {
+    transform: translateY(0);
+  }
+  to {
+    transform: translateY(30px);
+  }
+}
+@keyframes float_body {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-10px);
+  }
+}
+@keyframes heroine_hop {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  30% {
+    transform: translateY(-16px);
+  }
+  55% {
+    transform: translateY(0);
+  }
+  75% {
+    transform: translateY(-7px);
+  }
+}
+
+// スクロールバーは出さない (ステージの中の一覧)
+.no_scrollbar {
+  scrollbar-width: none;
+  &::-webkit-scrollbar {
+    display: none;
+  }
 }

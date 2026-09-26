@@ -85,7 +85,10 @@
         <button class="btn sub small" @click="dbg('debug.clearChapter', {})">章クリア</button>
         <button class="btn sub small" @click="dbg('debug.applyStatus', { key: 'poison', value: 3 })">毒 3</button>
         <button class="btn sub small" @click="dbg('debug.applyStatus', { key: 'sleep', value: 1 })">眠り 1</button>
-        <button class="btn sub small" @click="dbg('debug.applyStatus', { key: 'ds_unique1', value: 2 })">固有 1</button>
+        <button class="btn sub small" @click="dbg('debug.applyStatus', { key: 'ds_crystal', value: 2 })">結晶化 2</button>
+        <button class="btn sub small" @click="dbg('debug.applyStatus', { key: 'ds_fever', value: 2 })">体温上昇 2</button>
+        <button class="btn sub small" @click="dbg('debug.applyStatus', { key: 'evade', value: 1 })">回避 1</button>
+        <button class="btn sub small" @click="dbg('debug.applyStatus', { key: 'focus', value: 1 })">好調 1</button>
         <button class="btn sub small" @click="dbg('debug.crossBreak', {})">クロスブレイク</button>
       </div>
       <div class="heading_s">ハッシュ直行</div>
@@ -132,7 +135,7 @@ const breakdownText = computed(() => {
 const permissions = computed(() => {
   if (!run.state) return [];
   const qq = q(run.state);
-  return PERMISSION_NAMES.filter((n) => n === "canAct").map((n) => ({ name: n, ...qq.permission(n) }));
+  return PERMISSION_NAMES.filter((n) => ["canAct", "canFlee", "canRepairCostume"].includes(n)).map((n) => ({ name: n, ...qq.permission(n) }));
 });
 
 const stepName = ref("player.strike.after");

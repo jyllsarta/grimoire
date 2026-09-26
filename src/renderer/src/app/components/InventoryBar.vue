@@ -1,112 +1,91 @@
 <template>
-  <div class="inventory">
-    <div class="slots" :style="{ '--slots': slotCount }">
-      <div v-for="i in slotCount" :key="i" class="cell"></div>
-      <button
-        v-for="e in entities"
-        :key="e.uid"
-        class="entity"
-        :class="[e.kind, { active: e.active, ready: e.ready === true, resting: e.ready === false, concealed }]"
-        :style="{ '--pos': e.pos, '--size': sizeOf(e) }"
-        @click="onClick(e)"
-      >
-        <div class="ename">{{ concealed ? "???" : defOf(e).name }}</div>
-        <div v-if="!concealed" class="meta hint">
-          <span v-if="e.kind === 'equipment'">{{ e.active ? T("inventory.on") : T("inventory.off") }}</span>
-          <span v-if="e.kind === 'ability'">{{ e.ready ? T("inventory.use") : `${e.progress}/${defOf(e).rechargeValue ?? "-"}` }}</span>
-          <span v-if="e.kind === 'item'">{{ T("inventory.use") }}</span>
-          <span v-if="e.durability >= 0">×{{ e.durability }}</span>
-        </div>
-      </button>
+  <div class="inventory_bar panel_glass" :class="{ in_battle: inBattle }" data-tips="inventory">
+    <div class="inv_head">
+      <div class="heading">{{ T("inventory.heading") }}</div>
+      <span class="hint flex_hint">{{ message }}</span>
+      <button v-if="!inBattle && !run.state.inventory.concealed" class="btn sub small" @click="organize">{{ T("inventory.organize") }}</button>
     </div>
-    <div v-if="message" class="hint msg">{{ message }}</div>
+    <InventoryStrip
+      :entities="run.state.inventory.entities"
+      :slot-count="slotCount"
+      :concealed="run.state.inventory.concealed"
+      :draggable="!inBattle && !run.state.inventory.concealed"
+      @ent-click="onEntClick"
+      @drop="onDrop"
+    />
   </div>
 </template>
 
 <script setup>
-// インベントリ帯 (02「画面と state の対応」)。クリックで 装備 ON/OFF / アイテム使用 / アビリティ使用 (dispatch)。D&D 整理は M3
+// 画面下のインベントリ帯 (02「画面と state の対応」)。クリックで 装備 ON/OFF / アイテム使用 / アビリティ使用 (dispatch)。
+// 非戦闘時はドラッグで並べ替え (arrangeInventory)。戦闘中はそのまま戦闘用になる
 import { computed, ref } from "vue";
 import { useRunStore } from "../stores/run.js";
+import { useSessionStore } from "../stores/session.js";
 import { q } from "@core/queries/index.js";
-import { defOf, entitySize } from "@core/domain/entity.js";
+import { entitySize } from "@core/domain/entity.js";
 import { T, reasonText } from "../text.js";
+import SoundManager from "../sound/sound_manager.js";
+import InventoryStrip from "./InventoryStrip.vue";
 
 const run = useRunStore();
-const entities = computed(() => run.state.inventory.entities);
-const concealed = computed(() => run.state.inventory.concealed);
+const session = useSessionStore();
+const inBattle = computed(() => !!run.state.battle);
 const slotCount = computed(() => q(run.state).derive("slotCount"));
 const message = ref("");
+let messageTimer = null;
 
-function sizeOf(e) {
-  return entitySize(e);
+function flash(text) {
+  message.value = text;
+  clearTimeout(messageTimer);
+  messageTimer = setTimeout(() => (message.value = ""), 2000);
 }
 
-function onClick(e) {
+function onEntClick(e) {
+  if (run.state.battle && run.state.battle.step !== "select") return;
   const name = { equipment: "toggleEquip", item: "useItem", ability: "useAbility" }[e.kind];
   const r = run.dispatch(name, { uid: e.uid });
-  message.value = r.ok ? "" : reasonText(r.reason);
+  if (!r.ok) {
+    SoundManager.playSe("ng");
+    flash(reasonText(r.reason));
+  } else if (name === "toggleEquip") SoundManager.playSe(r.active ? "equip" : "unequip");
+}
+
+function onDrop(e, pos) {
+  if (pos == null) return;
+  const arrangement = run.state.inventory.entities.map((x) => ({ uid: x.uid, pos: x.uid === e.uid ? pos : x.pos }));
+  const r = run.dispatch("arrangeInventory", { arrangement });
+  SoundManager.playSe(r.ok ? "equip" : "ng");
+  void entitySize;
+}
+
+function organize() {
+  SoundManager.playSe("open");
+  session.openDialog("organize", { mode: "plain" });
 }
 </script>
 
 <style lang="scss" scoped>
-.inventory {
+.inventory_bar {
+  padding: 10px 18px 12px;
   display: flex;
   flex-direction: column;
-  gap: 4px;
-  .slots {
-    --cell: 76px;
-    position: relative;
-    display: grid;
-    grid-template-columns: repeat(var(--slots), var(--cell));
-    gap: 4px;
-    height: 84px;
-  }
-  .cell {
-    height: 84px;
-    border-radius: var(--radius-card);
-    background: var(--color-base4);
-    border: 1px dashed var(--color-base2);
-  }
-  .entity {
-    position: absolute;
-    top: 0;
-    left: calc(var(--pos) * (var(--cell) + 4px));
-    width: calc(var(--size) * var(--cell) + (var(--size) - 1) * 4px);
-    height: 84px;
-    border-radius: var(--radius-card);
-    border: 2px solid var(--color-base1);
-    background: var(--color-base3);
-    box-shadow: var(--shadow-card);
+  border-bottom: none;
+  border-radius: var(--radius-panel) var(--radius-panel) 0 0;
+  .inv_head {
     display: flex;
-    flex-direction: column;
-    justify-content: center;
     align-items: center;
-    gap: 2px;
-    text-align: center;
-    padding: 4px;
-    .ename {
+    gap: 12px;
+    .heading {
       font-size: var(--font-size-small);
-      line-height: 1.1;
     }
-    &.equipment.active {
-      border-color: var(--shape-attack);
-      background: var(--color-base2);
-    }
-    &.ability.ready {
-      border-color: var(--color-d1);
-    }
-    &.ability.resting {
-      opacity: 0.6;
-    }
-    &.item {
-      border-color: var(--shape-life);
-    }
-    &.concealed {
-      filter: grayscale(1);
+    .flex_hint {
+      flex: 1;
+      color: var(--color-negative1);
     }
   }
-  .msg {
-    color: var(--color-negative1);
+  :deep(.inv_strip) {
+    margin-top: 8px;
   }
 }
 </style>

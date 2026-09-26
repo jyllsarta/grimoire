@@ -58,7 +58,8 @@ watch(
   flex-wrap: wrap;
   border-radius: 12px;
   line-height: 130%;
-  color: var(--color-base5);
+  // 枠画像 (frames/baloon.png) は暗色の半透明なので文字は明色 (base5 だと枠に溶けて見えない)
+  color: var(--color-white0);
 
   // 反転は transform ではなく左右反転済みの画像に差し替える (border-image の継ぎ目対策)
   &.mirrored {

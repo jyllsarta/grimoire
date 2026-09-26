@@ -1,16 +1,19 @@
 <template>
-  <div ref="stage" class="stage">
+  <div ref="stage" class="stage" @contextmenu.prevent="onContextMenu">
     <template v-if="session.loaded">
       <TitleScene v-if="session.scene === 'title'" />
       <MenuScene v-else-if="session.scene === 'menu'" />
+      <BookSelectScene v-else-if="session.scene === 'bookSelect'" />
+      <StarPaletteScene v-else-if="session.scene === 'star'" />
       <template v-else-if="session.scene === 'inGame' && run.state">
         <ResultScene v-if="run.phase === 'ended'" />
         <IntermissionScene v-else-if="run.phase === 'intermission'" />
         <InGameScene v-else />
       </template>
       <StepMover v-if="run.state" />
+      <DialogHost />
       <Fragments />
-      <SoundPanel class="sound_panel" />
+      <CornerButtons :show-speed="session.scene === 'inGame'" />
       <button v-if="devTools" class="inspector_toggle" @click="inspector.toggle()">
         {{ T("inspector.title") }}
       </button>
@@ -21,7 +24,8 @@
 
 <script setup>
 // ============================================================
-// GameWindow: 論理ステージ (1280x720 + CSS zoom)、シーン切替、一発物の振り分け (Fragments / Sound / Inspector)
+// GameWindow: 論理ステージ (1280x720 + CSS zoom)、シーン切替、ダイアログ置き場、一発物の振り分け (Fragments / Sound / Inspector)、
+// 右クリック (個体説明 / tips)、非フォーカス時ミュート
 // ============================================================
 import { onMounted, onBeforeUnmount, ref, watch } from "vue";
 import { installViewport } from "@platform/viewport.js";
@@ -37,10 +41,13 @@ import { EVENT_SE } from "./sound/sound_master.js";
 import { fragmentsFor } from "./fragments/effects.js";
 import Fragments from "./fragments/Fragments.vue";
 import StepMover from "./StepMover.vue";
-import SoundPanel from "./components/SoundPanel.vue";
+import DialogHost from "./dialogs/DialogHost.vue";
+import CornerButtons from "./components/CornerButtons.vue";
 import Inspector from "./inspector/Inspector.vue";
 import TitleScene from "./scenes/TitleScene.vue";
 import MenuScene from "./scenes/MenuScene.vue";
+import BookSelectScene from "./scenes/BookSelectScene.vue";
+import StarPaletteScene from "./scenes/StarPaletteScene.vue";
 import InGameScene from "./scenes/InGameScene.vue";
 import IntermissionScene from "./scenes/IntermissionScene.vue";
 import ResultScene from "./scenes/ResultScene.vue";
@@ -55,6 +62,29 @@ const devTools = !edition.isProd;
 let uninstallViewport = null;
 let unsubscribe = null;
 
+// 右クリック: data-desc (個体説明) → data-tips (用語)。説明の上でもう一度右クリックすると閉じる
+function onContextMenu(e) {
+  const top = session.topDialog;
+  if (top && (top.name === "detail" || top.name === "tips")) {
+    session.closeDialog(top.id, null);
+    return;
+  }
+  const descEl = e.target.closest?.("[data-desc]");
+  if (descEl && descEl.dataset.desc) {
+    session.openDialog("detail", { desc: descEl.dataset.desc, ref: descEl.dataset.descRef || null });
+    return;
+  }
+  const tipsEl = e.target.closest?.("[data-tips]");
+  if (tipsEl && tipsEl.dataset.tips) session.openDialog("tips", { key: tipsEl.dataset.tips });
+}
+
+function onBlur() {
+  if (session.options.muteOnBlur) SoundManager.setMuted(true);
+}
+function onFocus() {
+  SoundManager.setMuted(false);
+}
+
 onMounted(async () => {
   uninstallViewport = installViewport(stage.value);
   document.title = `${master.config.title} ${edition.version}${edition.name !== "prod" ? ` (${edition.name})` : ""}`;
@@ -63,6 +93,8 @@ onMounted(async () => {
   SoundManager.setVolumes({ master: session.options.masterVolume, bgm: session.options.bgmVolume, se: session.options.seVolume });
   SoundManager.loadAll();
   if (devTools) inspector.setMasterWarnings(tables);
+  window.addEventListener("blur", onBlur);
+  window.addEventListener("focus", onFocus);
 
   // 一発物の振り分け: 音 → 演出 → インスペクタ
   unsubscribe = onDispatched((info) => {
@@ -80,6 +112,8 @@ onMounted(async () => {
 onBeforeUnmount(() => {
   uninstallViewport?.();
   unsubscribe?.();
+  window.removeEventListener("blur", onBlur);
+  window.removeEventListener("focus", onFocus);
 });
 
 watch(
@@ -96,6 +130,13 @@ watch(
     if (devTools) inspector.reset(run.state);
   },
 );
+// シーンが変わったらダイアログを畳む (スキット待ちの Promise は null で解決)。
+// sync で走らせる: setScene の直後に開くダイアログ (本のはじまりのスキット等) を巻き込まないため
+watch(
+  () => session.scene,
+  () => session.closeAllDialogs(),
+  { flush: "sync" },
+);
 </script>
 
 <style lang="scss" scoped>
@@ -107,13 +148,6 @@ watch(
   height: 720px;
   overflow: hidden;
   background: var(--color-base5);
-}
-
-.sound_panel {
-  position: absolute;
-  top: 8px;
-  right: 8px;
-  z-index: 800;
 }
 
 .inspector_toggle {

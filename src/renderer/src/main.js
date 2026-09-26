@@ -3,6 +3,7 @@ import { createPinia } from "pinia";
 import App from "./App.vue";
 import tables from "@masterdata/index.js";
 import { loadMaster } from "@core/master/index.js";
+import { vHoverSe } from "./app/ui/directives.js";
 import "./app/styles/global.scss";
 
 if (!__IS_PROD__) {
@@ -18,6 +19,7 @@ loadMaster(tables);
 
 const app = createApp(App);
 app.use(createPinia());
+app.directive("hover-se", vHoverSe);
 app.mount("#window");
 
 // ドラッグ操作の既定動作 (画像のドラッグ等) を止める

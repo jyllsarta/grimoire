@@ -83,6 +83,7 @@ core の中のファイル分割の方針 (xqueens の `phase_*.js` と同じ): 
 バトル中:
       攻撃ボタン → dispatch("attack")  (battle.step が select → turn.command になるだけ)
       StepMover が battle.step を watch し、「そのステップで出た一発物の演出時間」だけ待ってから dispatch("advance") を打つ。select か battle.end に着くまで繰り返す
+      勝利で battle.end に着いたときは、勝利演出を見せる時間 (delays.js の VICTORY_CLOSE_MS) だけ待って dispatch("closeBattle") も StepMover が打つ。逃走 / 敗北は とじる ボタン待ち
 ```
 
 - **state は 1 本の実物**。app の run store が `reactive(state)` で包んで晒し、全コンポーネントが直接読む (プロトの battleVm のような写しは作らない)。core は包まれているかどうかを気にしない。テストは素の state で同じコードを回す (xqueens と同じ)

@@ -2,11 +2,54 @@
 
 設計書 (00〜09) に書かなかった、作業を始めるときに要る実務情報。設計が変わったらこのメモより設計書を優先する。
 
-## 状態 (2026-09-22)
+## 状態 (2026-09-26)
 
-- 設計書 v1.2 をユーザが承認 (「すべて OK」)。次は M1 = スキャフォールド + 基盤
+- 設計書 v1.2 をユーザが承認 (「すべて OK」)。M1 = スキャフォールド + 基盤は済
 - 作業ブランチは `feature/m1-scaffold`。master へのマージはユーザ
-- **M1 の手順 1〜9 は着手済み** (下の「M1 でやったこと・残したこと」)。見た目の承認待ち
+- M2 (コアロジック、デスサイズちゃん想定のデータ) は済 (下の「M2 でやったこと・残したこと」)
+- **M3 (UI: tale のレイアウト v2 / トンマナ、アウトゲーム、ダイアログ、スキット) を実装済み** (下の「M3 でやったこと・残したこと」)。2026-09-26 にユーザが一通り確認して承認、コミット済み
+- 承認後の手直し (2026-09-26): 吹き出しの文字色 (暗色の枠に暗色の文字で見えなかった)、勝利後の戦闘レイヤー自動クローズ (StepMover、`VICTORY_CLOSE_MS`)、白フチが素材の端で切れる問題 (outline を四方 1/32 広いキャンバスに)、結晶化 SD の取り込み (素材の special1.png が結晶化、みずぎは未着で仮)、`tools/sync.ps1` の UTF-8 BOM
+
+## M3 でやったこと・残したこと
+
+やったこと (2026-09-26):
+
+- 見た目の土台: `app/ui/shapes.js` (図形 SVG) / `card_shape.js` (パネルとタイルの外形) / `entity_view.js` / `star_view.js` / `sd.js` (SD の重ね順と表情対応)、部品 `Shape` / `CardShape` / `Ornament` / `HpDots` / `StatusChips` / `SdPiece` / `CharacterFigure` / `PanelCard` / `EntityTile` / `InventoryStrip` (ドラッグ並べ替え) / `InventoryBar` / `LifePanel` / `DeckSummary` / `ChapterHead` / `BoardPanel` / `CornerButtons` / `EnemyVisual` / `BattleLayer` (下から生える戦闘パネル、裏の にげる / 行動メモ、床グリッド、数字とトースト)。`global.scss` に tale の汎用クラス (btn / orn_frame / peek_* / アニメ)
+- ダイアログ (`app/dialogs/`): DialogHost / DialogFrame と PanelPeek / Event (条件付き選択肢は伏せる) / EventResult / Organize (並べ替え、棚、保留の解決) / Detail (右クリック) / Tips / Confirm / Deck / Skit (talk / scene) / Options / Savedata / Credits / Difficulty。`session.dialogs` はスタックで `openDialog` が Promise を返す
+- シーン: Title (テキストロゴ) / Menu (ヒロインカード + 変動値) / BookSelect (プロフィール + スキット一覧 + 本のカード) / StarPalette (3 層パララックス、星座は `assets/star/outlines.json`) / InGame (レイアウト v2) / Intermission (1180x660 のダイアログ、レア枠リボン) / Result (変動値と有効ノード)。導線は `app/flow/title.js` (初回オープニング → 難易度) と `app/flow/skits.js`
+- セリフ `talk` ストア + characterScripts のデスサイズちゃん分 (たたき台 40 行)、tips 30 件、skits 8 本 (opening / bookStart / bossBefore / bookClear / extraStart / happyEnd / normalEnd / lose) と skitLines (たたき台)、systemTexts 82〜315
+- tools: `python tools/sd_outline.py` (白フチ。outline_normal / half / full / special1 / ds_crystal / ds_fever を生成済み)、`python tools/star_outline.py` (→ `assets/star/outlines.json`)。旧 `outlines.js` は削除。`#peek` `#event` `#organize` `#bookselect` `#star` `#skit` のハッシュ直行を追加
+- 確認: `npm test` 54 / lint 0 / selftest OK。`tmp/shots/*.png` (title / menu / bookselect / star / ingame / battle / badbattle / peek / event / organize / intermission / result / skit)
+- **実機テストプレイ** `node tools/playtest.js` (headless Chrome を CDP で操作し、本物の DOM をクリックして進めるボット。コンソールのエラー / Vue warn / 例外 / 詰まりを集める)。`--cheat` で回復と通貨を足して Extra Chapter まで、`--resume` でラン中にページを読み直して つづきから を通す、`--runs N --steps N --verbose`。これで見つけて直したもの: 勝利直後の BattleLayer (パネルが盤面から消える)、イベント / 覗き見ダイアログが選択後に落下してきた別パネルを読む (開いた時点のパネルを掴む)。chrome-devtools MCP は `.mcp.json` に登録済み (セッション再起動で有効)
+
+残したこと (M4 以降、または素材待ち):
+
+- 一枚絵 (`grimoire_scenes/scene<skitId>_<n>.png`) とカットイン (`cutin11.png`) の素材。無い間は scene 形式のスキットは「(この場面の絵は準備中)」、カットインは出ない
+- セリフ / スキット / tips の最終文言 (ユーザの領分)。characterScripts のキー一覧は `data/characterScripts.csv`
+- 混乱の SD、みずぎ (costume_special1) の SD、敵アイコンの本番
+- 言語切替 (オプションに日本語表示のみ)、実績、`tools/editor.js` (スターパレットのエディタ)
+- 演出の磨き: 敵撃破の消滅、パネル落下の物理、リーサルサイズ専用のカットイン風演出 (いまはトースト)、幕間の立ち絵の吹き出し
+- ヒロインの 2 人目以降のとき: 本のカードの「やり込み」(他人の本) の見せ方、キャラカード横並びの幅
+
+## M2 でやったこと・残したこと
+
+やったこと (2026-09-26、R3 の回答と 11 の本番仕様を受けて):
+
+- 敵のシールド (`enemy.shield`、`enemies.shield`、敵アクション `shield`、`damageEnemy` の pierceShield)、`enemy.killed` ステップ (just = ジャストリーサル)、`enemy.attack.before` (回避の無効化)、`relic.gained` (取得時の即時効果)、動詞 `gainRelic` / `removeStatus` / `gain` の preferPos、契約 `onTake` / `fire` / `check`、family `choiceCondition`、許可 `canFlee` / `canRepairCostume`、派生 `lethalThreshold`
+- デスサイズちゃんの効果モジュール: statuses evade / focus / ds_crystal / ds_fever、relics lethalScythe / lethalThresholdPlus / firstTurnPierce / battleStartStatus、passive lethalThresholdPlus、item pierceAttack、ability selfStatus、bookRule statusOnJustLethal、eventEffects loseAllEntities / loseAllCoins / harshness / status の value2、choiceCondition wingsAndInventoryAtMost、star chapterEnemy / misfortuneCandidate
+- マスタ: config の枠配分列、characters.wings / startRelicIds、enemies.shield、eventChoices.condition / value2。デスサイズちゃん想定のデータ一式 (敵 31〜39 / 51〜54 / 101〜104、章 1〜4、イベント 11 / 13、パネル 1011 / 2011 / 3011、レリック 11〜14)。数値は全部たたき台
+- ショップの枠配分 (R3 Q18)、healPrice は次の章 (Q19)、query `rechargeInfo` / `eventChoices` / `nextRoutine` (Q20 / Q21)、スターパレットのコア `core/star/palette.js` (Q3)、ボットの貪欲化と到達章の集計 (Q4)、schemaVersion 2 のマイグレーション
+- 素材: 本番の立ち絵と SD を `tools/art_sync.js` でコピー (09)。tale 時代の outline と unique_ds_unique* は削除
+- テスト: `test/unit/deathscythe.test.js` (21)、`star.test.js` (5)、`book.test.js` (本 1 冊の完走 2 経路)。`npm test` 54 / fuzz 150 ラン / selftest 通過
+
+ボットの結果 (たたき台の数値): 60 ラン全敗、到達は平均 1.18 章 (49 ランが 1 章クリア、11 ランが 2 章クリア。2 章の ぬし で止まる)。バランスはユーザがスプレッドシートで見る。`node tools/selftest.js --runs 60` で再計測
+
+残したこと (M3 以降):
+
+- (M3 で解消) 白フチ `tools/sd_outline.py` の移植と outline の再生成、SD の描画部品 (SdPiece)、結晶化テクスチャ (にげる ボタンの結晶オーバーレイ)、リーサルサイズ / 回避の演出 (トースト + セリフ)、条件付き選択肢の見せ方 (青い選択肢、満たさないと ？？？)
+- tale のモジュールで未移植のもの (必要になったヒロインで足す)、`repairCostume`、ディレイ系のアビリティ本体
+- リチャージ条件の「文字に頼らない可視化」、バランスの自動調整 (ロードマップ)
+- R4: 11 の「未決」
 
 ## M1 でやったこと・残したこと
 
@@ -25,15 +68,13 @@
 
 - 敵アクションの「なにもしない」は `rest` にした (`sleep` は statuses.key の眠りと衝突するため。05 の enemyAction キー一覧を参照)
 - 不変条件「battle.panelUid は board.cells のどれかで kind=enemy」は `battle.result === "victory"` のとき (boardUpdate 後、closeBattle 待ち) は見ない (02 に追記)
-- レリック maxHpPlus の「現在値も同時に増える」は未実装 (派生 maxHp にだけ乗る)。M2 で `relic.acquired` 的な発火点を決める
+- レリック maxHpPlus の「現在値も同時に増える」は M2 で `relic.gained` に載せた
 
-残したこと (M2 以降):
+M1 で残し、M2 で解消したもの: ショップの枠配分、リチャージ条件の query、スターパレットのコア、ボットの手。まだ残るもの:
 
-- 効果モジュールの残り (tale の item 17 / ability 6 / passive 10 / relic 16 / enemyAction 11 / star 31 / recharge 7 のうち M1 に入れなかったもの)、ディレイ系、混乱の詳細、ショップの枠配分 (05)、リチャージ条件の query
-- スターパレット (有効ノード → star.effects のスナップショット)、スキット、tips、セーブ管理ダイアログ、オプションダイアログ、言語
-- tale/tools の sd_outline.py / star_outline.py / editor.js (M3)
+- (M3 で解消) スキット、tips、セーブ管理ダイアログ、オプションダイアログ。言語切替は未 (日本語のみ)
+- (M3 で解消) tale/tools の sd_outline.py / star_outline.py。editor.js は未
 - Capacitor (Android) の依存は未追加。`__IS_ANDROID__` の分岐だけ置いてある
-- ボットは全敗 (勝率は参考値)。マスタとボットの手は M2 で
 - R2 末尾の「仮の解釈 4 点」(眠りの解除はシールド吸収でも / 混乱の全装備 OFF は付与後最初の turn.start / クロスブレイクの過酷さは別カウンタ・同じ重み / Extra Chapter は通常章形式) は異論が出ていないので採用
 
 ## M1 の手順
@@ -79,6 +120,9 @@
 - PowerShell で `--scopes` の値はクォート (カンマで配列化される)。Node から gcloud.cmd は execSync + クォート
 - 許可プロンプトを減らす: リポジトリ直下から `node tools/x.js ...` のように単独 1 行で打つ (cd / && / for / 変数代入を混ぜない)。`.claude/settings.json` の allowlist を最初に整える
 - headless Chrome で `#intermission` 系のダイアログ上端が切れて写ることがある (tale で既知、原因未調査)
+- 真っ白なスクショ = 起動時の実行時エラー。`"/c/Program Files/Google/Chrome/Application/chrome.exe" --headless=new --enable-logging=stderr --v=0 --virtual-time-budget=7000 --dump-dom "http://localhost:5173/#title" 2>&1 | grep CONSOLE | grep -v -e "\[vite\]" -e AudioContext` でコンソールが読める。コンパイルエラーは vite が各モジュールの GET に 500 で返す
+- `session.scene` の watch でダイアログを畳む処理は `flush: "sync"` にしてある。既定の post flush だと「setScene 直後に openDialog」が畳まれる (ハッシュ直行で dialog が出なかった原因)
+- dev サーバは public のスナップショットを起動時に取るが、既存ディレクトリへのファイル追加 (outline_*.png、outlines.json) はそのまま配られた。ディレクトリを増やしたときだけ再起動
 - Read で画像を一度に 12 枚以上読むと失敗する。10 枚前後ずつ。並列 Read の結果順は要求順と一致しないことがある
 - NekoSpoon に無い記号 (» など) は空白になる。図形の文字は ASCII に限定
 - CSS zoom の挙動確認は Chrome 153 で済み (01)。Electron 44 の Chromium でも同じはずだが、スキャフォールド時に同じテストページで再確認する
@@ -87,6 +131,8 @@
 ## ユーザとの進め方 (grimoire でも同じ)
 
 - 仕様の不明点は着手前に Q1..Qn 形式でまとめて出す (AskUserQuestion は使わない)。回答は docs/qa/ に転記
+- ゲームバランスに関与する値でも、不変のグローバルな定数はモジュールに直接書いてよい。可変・複数種類をマスタで使い分けるときにマスタ化を検討する (R3 Q18)
+- tale のモジュールは全部は移植しない。必要になったヒロインで足す。ただし足すときに不自然にならないよう契約点は先に用意する (R3 Q2)
 - ユーザは作業をリアルタイムで見ている。途中の質問や拒否理由に疑問文があれば止まって答える
 - 見た目の確認は `tmp/` に画像を保存してパスを伝える。見た目が認められるまでコミットしない (ロジックはテストが通ればコミット可)
 - セリフの最終文言はユーザの領分。たたき台は歓迎
