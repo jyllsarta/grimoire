@@ -1,10 +1,14 @@
-// 動詞: applyStatus (04 の付与規則) / addBuff
+// 動詞: applyStatus (04 の付与規則) / removeStatus / addBuff
 import { master } from "../master/index.js";
 import { registry } from "../effects/index.js";
 
 function statusModule(key) {
   const def = master.byKey("statuses", key);
   return registry.find(def.kind === "costume" ? "costume" : "status", def.effect || def.key);
+}
+
+function holderOf(state, target) {
+  return target === "player" ? state.player : state.board.panels[target].enemy;
 }
 
 // target は "player" か 敵の panelUid。付与できたら true
@@ -26,7 +30,7 @@ export function applyStatus(ctx, target, key, value, { source = null } = {}) {
     state.player.unique = { key, turns: amount };
     ctx.emit("uniqueApply", { key, turns: amount });
   } else {
-    const holder = target === "player" ? state.player : state.board.panels[target].enemy;
+    const holder = holderOf(state, target);
     const existing = holder.statuses.find((s) => s.key === key);
     if (existing) {
       if (def.duration === "turn")
@@ -42,7 +46,24 @@ export function applyStatus(ctx, target, key, value, { source = null } = {}) {
   return true;
 }
 
-// バトルバフ。同 key は加算 (stackable)、turns は最新で上書き。turns < 0 は「バトル中ずっと」
+// 共通ステートを amount ぶん減らす (省略で全部)。0 になったら消して onExpire を呼ぶ。消えたら true
+export function removeStatus(ctx, target, key, { amount = null, cause = "consume" } = {}) {
+  const state = ctx.state;
+  const holder = holderOf(state, target);
+  const entry = holder.statuses.find((s) => s.key === key);
+  if (!entry) return false;
+  const side = target === "player" ? "player" : "enemy";
+  entry.value -= amount == null ? entry.value : amount;
+  ctx.emit("statusConsume", { side, key, value: Math.max(0, entry.value), cause });
+  if (entry.value > 0) return false;
+  holder.statuses = holder.statuses.filter((s) => s.key !== key);
+  const def = master.byKey("statuses", key);
+  statusModule(key)?.onExpire?.(ctx, { family: "status", key: def.effect || def.key, statusKey: key, def, side });
+  ctx.emit("statusExpire", { side, key });
+  return true;
+}
+
+// バトルバフ。同 key は加算 (stackable)、turns は最新で上書き。turns < 0 は「バトル中ずっと」(R3 Q5)
 export function addBuff(ctx, side, key, value, turns) {
   const holder = side === "player" ? ctx.state.battle : ctx.enemy();
   if (!holder) throw new Error("addBuff: バトル中でない");

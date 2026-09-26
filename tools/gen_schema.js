@@ -22,7 +22,8 @@ const FAMILY_DESC = {
   item: "items.type",
   ability: "abilities.type",
   enemyAction: "enemyActions.actions[i].type (statuses.key (common|unique) も書ける: value = 量)",
-  eventEffect: "eventChoices.effects[i].type (value は 1 個)",
+  eventEffect: "eventChoices.effects[i].type (values[0] = value、values[1] = value2)",
+  choiceCondition: "eventChoices.condition.type (選択肢を出す条件。check が true なら選べる)",
 };
 
 function columnsOf(table) {

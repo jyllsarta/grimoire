@@ -2,21 +2,36 @@
 // 効果モジュール契約 (03「効果モジュール契約」)
 //
 // defineEffect({
-//   family,      "status" / "costume" / "bookRule" / "passive" / "relic" / "star" / "item" / "ability" / "enemyAction" / "eventEffect"
+//   family,      "status" / "costume" / "bookRule" / "passive" / "relic" / "star" / "item" / "ability" / "enemyAction" / "eventEffect" / "choiceCondition"
 //   key,         family 内で一意。マスタの type (または statuses.key) と一致
 //   values,      マスタ values の schema: [{ name, type: "int", min?, max? }]。検証と SCHEMA が読む
 //   refs,        values の中で他テーブルを指すもの: [{ index, table }]
 //   text,        UI 向けヒント (図形、チップ)。ロジックは見ない
-//   use(ctx, src),          item / ability の使用時の効果
+//   use(ctx, src, ...),     item / ability / enemyAction / eventEffect の使用時の効果
+//   onTake(ctx, src),       item / ability / passive: 盤面回収の瞬間の割り込み (R3 Q7)。true を返すとインベントリに入らない
+//   fire(ctx, entry),       ability: battle.delayed に積んだ予約が turn.start で発火するときの処理 (R3 Q6)
+//   check(ctx, src, args),  choiceCondition: 選択肢を出せるか (true / false)
 //   hooks:       { [step]: { order, when?, run } }
 //   modifiers:   { [derivedName]: { stage, order, apply } }   apply は {label, value} か null
 //   permissions: { [permissionName]: { order, check } }       check が理由キーを返したら不許可
 //   lists:       { [listName]: { order, provide } }
-//   status 固有: side, duration, onApply, onExpire, flags (04)
+//   status 固有: onApply, onExpire, flags (04)
 // })
 // ============================================================
 
-export const FAMILIES = ["status", "costume", "bookRule", "passive", "relic", "star", "item", "ability", "enemyAction", "eventEffect"];
+export const FAMILIES = [
+  "status",
+  "costume",
+  "bookRule",
+  "passive",
+  "relic",
+  "star",
+  "item",
+  "ability",
+  "enemyAction",
+  "eventEffect",
+  "choiceCondition",
+];
 export const STAGES = ["base", "flat", "mult", "final"];
 export const DEFAULT_ORDER = 100; // 省略時「標準処理 (500) より前」
 
@@ -45,6 +60,8 @@ export function defineEffect(def) {
     if (typeof list.provide !== "function") throw new Error(`defineEffect ${def.family}.${def.key}: lists.${name}.provide が関数でない`);
     lists[name] = { order: list.order ?? DEFAULT_ORDER, provide: list.provide };
   }
+  if (def.family === "choiceCondition" && typeof def.check !== "function")
+    throw new Error(`defineEffect ${def.family}.${def.key}: check が関数でない`);
 
   return Object.freeze({
     family: def.family,
@@ -53,6 +70,9 @@ export function defineEffect(def) {
     refs: def.refs || [],
     text: def.text || {},
     use: def.use || null,
+    onTake: def.onTake || null,
+    fire: def.fire || null,
+    check: def.check || null,
     hooks,
     modifiers,
     permissions,

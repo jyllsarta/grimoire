@@ -123,6 +123,43 @@ export default [
     "description": "受ける状態異常 +1。"
   },
   {
+    "id": 1014,
+    "characterId": 1,
+    "kind": "node",
+    "x": 300,
+    "y": -360,
+    "fromIds": [
+      1013
+    ],
+    "effectType": "misfortuneCandidate",
+    "values": [
+      13
+    ],
+    "delta": -2,
+    "gateType": "",
+    "name": "呪われ体質・沼",
+    "description": "幕間で「怪しいプール」が売られるようになる。"
+  },
+  {
+    "id": 1015,
+    "characterId": 1,
+    "kind": "node",
+    "x": -300,
+    "y": -360,
+    "fromIds": [
+      1012
+    ],
+    "effectType": "chapterEnemy",
+    "values": [
+      39,
+      1
+    ],
+    "delta": -2,
+    "gateType": "",
+    "name": "鎧の先ぶれ",
+    "description": "一章に「呪い鎧」が 1 体増える。"
+  },
+  {
     "id": 1021,
     "characterId": 1,
     "kind": "gate",
@@ -138,5 +175,23 @@ export default [
     "gateType": "clearAny",
     "name": "深淵の入り口",
     "description": "本を 1 冊制覇すると開く。"
+  },
+  {
+    "id": 1022,
+    "characterId": 1,
+    "kind": "node",
+    "x": 0,
+    "y": -480,
+    "fromIds": [
+      1021
+    ],
+    "effectType": "startHpMinus",
+    "values": [
+      10
+    ],
+    "delta": -3,
+    "gateType": "",
+    "name": "深淵",
+    "description": "一章の開始ライフ -10。"
   }
 ];

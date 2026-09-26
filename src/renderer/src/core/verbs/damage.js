@@ -30,20 +30,33 @@ export function damagePlayer(ctx, n, { tag = "enemyAttack", pierceShield = false
   return { hpLoss, absorbed };
 }
 
-// ブロック処理。通ったダメージを enemy.damageTaken に発生源つきで 1 件積む。ちょうど 0 で recharge(justLethal)。0 以下で result = victory
-export function damageEnemy(ctx, n, { ignoreBlock = false, tag = "strike", source = null } = {}) {
+// 敵へのダメージ。ブロック (ignoreBlock で無視) → シールド (pierceShield で無視) → HP の順に削る。
+// 通ったダメージを enemy.damageTaken に発生源つきで 1 件積む。HP が 0 以下になった瞬間に 1 回だけ enemy.killed を発火
+// (ちょうど 0 なら just = ジャストリーサル)。0 以下で result = victory
+export function damageEnemy(ctx, n, { ignoreBlock = false, pierceShield = false, tag = "strike", source = null } = {}) {
   const state = ctx.state;
   const enemy = ctx.enemy();
   if (!enemy) throw new Error("damageEnemy: バトル中でない");
   const block = ignoreBlock ? 0 : enemy.block;
-  const dmg = Math.max(0, n - block);
-  const blocked = n - dmg;
+  let remaining = Math.max(0, n - block);
+  const blocked = Math.max(0, n) - remaining;
+  let absorbed = 0;
+  if (!pierceShield && enemy.shield > 0) {
+    absorbed = Math.min(enemy.shield, remaining);
+    enemy.shield -= absorbed;
+    remaining -= absorbed;
+  }
+  const dmg = remaining;
+  const before = enemy.hp;
   enemy.hp -= dmg;
   enemy.damageTaken.push({ tag, source: describeSource(source), amount: dmg, turn: state.battle.turn });
-  ctx.emit("enemyDamage", { tag, dmg, blocked, source: describeSource(source) });
+  ctx.emit("enemyDamage", { tag, dmg, blocked, absorbed, source: describeSource(source) });
   if (blocked > 0 && !ignoreBlock) ctx.emit("enemyBlocked", { blocked });
-  ctx.fire("enemy.damaged", { tag, dmg, blocked, source });
-  if (enemy.hp === 0) ctx.recharge("justLethal", 1);
-  if (enemy.hp <= 0) state.battle.result = "victory";
-  return { dmg, blocked };
+  if (absorbed > 0) ctx.emit("enemyShieldAbsorb", { absorbed, shield: enemy.shield });
+  ctx.fire("enemy.damaged", { tag, dmg, blocked, absorbed, source });
+  if (before > 0 && enemy.hp <= 0) {
+    state.battle.result = "victory";
+    ctx.fire("enemy.killed", { just: enemy.hp === 0, tag, source });
+  }
+  return { dmg, blocked, absorbed };
 }

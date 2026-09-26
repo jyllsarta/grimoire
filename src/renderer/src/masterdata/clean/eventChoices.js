@@ -2,40 +2,63 @@
 export default [
   {
     "id": 111,
-    "label": "いたた…",
-    "resultText": "転んで衣装がやぶれた。ライフ -2。",
+    "label": "リュックを落としちゃった",
+    "resultText": "リュックが暗闇に落ちていった。武器・防具・アイテムを全部失った。",
     "effects": [
       {
-        "type": "hp",
-        "value": -2
+        "type": "loseAllEntities"
+      }
+    ]
+  },
+  {
+    "id": 112,
+    "label": "財布を落としちゃった",
+    "resultText": "財布が暗闇に落ちていった。コインを全部失った。",
+    "effects": [
+      {
+        "type": "loseAllCoins"
+      }
+    ]
+  },
+  {
+    "id": 131,
+    "label": "浸かる (毒沼だった！)",
+    "resultText": "沼は毒沼だった！ どく 3。",
+    "effects": [
+      {
+        "type": "status",
+        "value": 1,
+        "value2": 3
+      }
+    ]
+  },
+  {
+    "id": 132,
+    "label": "浸かる (媚薬沼だった！)",
+    "resultText": "沼は媚薬沼だった！ はつじょう 3、過酷さ +1。",
+    "effects": [
+      {
+        "type": "status",
+        "value": 4,
+        "value2": 3
       },
       {
-        "type": "crossBreak",
-        "value": 0
+        "type": "harshness",
+        "value": 1
       }
     ]
   },
   {
-    "id": 121,
-    "label": "むりに引きぬく",
-    "resultText": "鎌は抜けたが衣装がやぶれた。",
-    "effects": [
-      {
-        "type": "crossBreak",
-        "value": 0
-      }
-    ]
-  },
-  {
-    "id": 122,
-    "label": "あきらめて置いていく",
-    "resultText": "コイン -2 で人に頼んだ。",
-    "effects": [
-      {
-        "type": "coins",
-        "value": -2
-      }
-    ]
+    "id": 133,
+    "label": "水溜まりを飛び越えた",
+    "resultText": "羽ばたいて飛び越えた。被害なし。",
+    "effects": [],
+    "condition": {
+      "type": "wingsAndInventoryAtMost",
+      "values": [
+        4
+      ]
+    }
   },
   {
     "id": 9011,

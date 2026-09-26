@@ -3,6 +3,8 @@ import { master } from "../master/index.js";
 import { panelAt, isSelectableCell, removePanel } from "../domain/board.js";
 import { createBattle } from "../domain/battle.js";
 import { validateArrangement, applyArrangement } from "../domain/inventory.js";
+import { choiceAvailable } from "../domain/event.js";
+import { defOf } from "../domain/entity.js";
 import { registry } from "../effects/index.js";
 
 const TAKEABLE = ["equipment", "item", "ability"];
@@ -14,11 +16,17 @@ function selectablePanel(ctx, cell) {
   return { panel };
 }
 
+// 回収時の割り込み (R3 Q7 onTake)。装備はパッシブ、アイテム / アビリティは type のモジュールが持つ。true を返したらインベントリに入らない
+function takeInterceptor(kind, def) {
+  if (kind === "equipment") return def.passive?.type ? registry.find("passive", def.passive.type) : null;
+  return registry.find(kind, def.type);
+}
+
 function takePanel(ctx, { cell, arrangement = null }) {
   const { panel, error } = selectablePanel(ctx, cell);
   if (error) return { ok: false, reason: error };
   if (!TAKEABLE.includes(panel.kind)) return { ok: false, reason: "notTakeable" };
-  const def = master.get({ equipment: "equipments", item: "items", ability: "abilities" }[panel.kind], panel.defId);
+  const def = defOf(panel);
   const cost = ctx.derive("panelCost", { def, panel });
   if (ctx.state.wallet.coin < cost) return { ok: false, reason: "coins" };
   if (arrangement) {
@@ -30,6 +38,17 @@ function takePanel(ctx, { cell, arrangement = null }) {
   const spec = { kind: panel.kind, defId: panel.defId, uid: panel.uid };
   removePanel(ctx, cell);
   ctx.emit("panelTake", { cell, ...spec, cost });
+  const mod = takeInterceptor(panel.kind, def);
+  const src = {
+    family: panel.kind === "equipment" ? "passive" : panel.kind,
+    key: mod?.key,
+    def,
+    values: (panel.kind === "equipment" ? def.passive?.values : def.values) || [],
+  };
+  if (mod?.onTake && mod.onTake(ctx, src, spec) === true) {
+    ctx.fire("panel.taken", { entity: null, panel: spec });
+    return { ok: true, uid: null, pending: false };
+  }
   const entity = ctx.gain(spec.kind, spec.defId, { source: { family: "panel", key: "take", defId: spec.defId } });
   ctx.fire("panel.taken", { entity, panel: spec });
   return { ok: true, uid: entity.uid, pending: entity.pos < 0 };
@@ -75,6 +94,7 @@ export const commands = {
       const choiceId = event.choiceIds[choiceIndex];
       if (choiceId == null) return { ok: false, reason: "unknownChoice" };
       const choice = master.get("eventChoices", choiceId);
+      if (!choiceAvailable(ctx, choice)) return { ok: false, reason: "choiceLocked" };
       const spec = { kind: "event", defId: panel.defId, uid: panel.uid };
       removePanel(ctx, cell);
       ctx.emit("eventChoose", { cell, ...spec, choiceId });

@@ -7,7 +7,18 @@
 import { TABLES } from "./tables.js";
 import { registry } from "../effects/index.js";
 
-const ENTITY_TABLES = { equipment: "equipments", item: "items", ability: "abilities" };
+export const RECHARGE_TYPES = ["exhaust", "justLethal", "damageTaken", "turn", "kill", "otherAbilityUse", "none"];
+export const GATE_TYPES = ["clearAny", "clearDelta", "crowns", "playedAny", "happyAny"];
+export const CONFIG_NUMBERS = [
+  "startSlots",
+  "maxSlots",
+  "shopOtherSlots",
+  "shopRelicSlots",
+  "shopRareSlots",
+  "rerollPrice",
+  "harshnessWeightMisfortune",
+  "harshnessWeightStatus",
+];
 
 export function validateMaster(tables, { requiredTextKeys = [] } = {}) {
   const problems = [];
@@ -73,6 +84,7 @@ export function validateMaster(tables, { requiredTextKeys = [] } = {}) {
       ["startEquipmentIds", "equipments"],
       ["startItemIds", "items"],
       ["startAbilityIds", "abilities"],
+      ["startRelicIds", "relics"],
     ]) {
       refs("characters", c.id, col, table, c[col]);
     }
@@ -90,6 +102,7 @@ export function validateMaster(tables, { requiredTextKeys = [] } = {}) {
     if (e.kind === "characterUnique") charRef("enemies", e.id, e.characterId);
     if ((e.kind === "placeholder" || e.kind === "characterUnique") && !(e.slot >= 1)) error("enemies", e.id, `slot=${e.slot} が不正`);
     if (!(e.hp >= 1)) error("enemies", e.id, `hp=${e.hp} が不正`);
+    if (e.shield != null && !(e.shield >= 0)) error("enemies", e.id, `shield=${e.shield} が負`);
   }
   const statusKeys = new Set(rows("statuses").map((s) => s.key));
   const applicableStatusKeys = new Set(
@@ -122,8 +135,7 @@ export function validateMaster(tables, { requiredTextKeys = [] } = {}) {
     charRef("abilities", a.id, a.characterId);
     if (!(a.size >= 1)) error("abilities", a.id, `size=${a.size} が不正`);
     checkType("abilities", a.id, "ability", a.type, a.values, { error, warn, has });
-    const RECHARGE = ["exhaust", "justLethal", "damageTaken", "turn", "kill", "otherAbilityUse", "none"];
-    if (!RECHARGE.includes(a.rechargeType)) error("abilities", a.id, `rechargeType="${a.rechargeType}" が不正`);
+    if (!RECHARGE_TYPES.includes(a.rechargeType)) error("abilities", a.id, `rechargeType="${a.rechargeType}" が不正`);
   }
   for (const r of rows("relics")) {
     charRef("relics", r.id, r.characterId);
@@ -147,7 +159,10 @@ export function validateMaster(tables, { requiredTextKeys = [] } = {}) {
     if (e.kind !== "placeholder" && !e.choiceIds?.length) error("events", e.id, "choiceIds が空");
   }
   for (const c of rows("eventChoices")) {
-    for (const eff of c.effects || []) checkType("eventChoices", c.id, "eventEffect", eff.type, [eff.value ?? 0], { error, warn, has }, true);
+    for (const eff of c.effects || []) {
+      checkType("eventChoices", c.id, "eventEffect", eff.type, [eff.value ?? 0, eff.value2], { error, warn, has }, true);
+    }
+    if (c.condition?.type) checkType("eventChoices", c.id, "choiceCondition", c.condition.type, c.condition.values || [], { error, warn, has });
   }
   const origins = {};
   for (const n of rows("starNodes")) {
@@ -156,8 +171,8 @@ export function validateMaster(tables, { requiredTextKeys = [] } = {}) {
     if (!["origin", "node", "gate"].includes(n.kind)) error("starNodes", n.id, `kind="${n.kind}" が不正`);
     if (n.kind === "origin") origins[n.characterId] = (origins[n.characterId] || 0) + 1;
     if (n.kind === "node") checkType("starNodes", n.id, "star", n.effectType, n.values, { error, warn, has });
-    if (n.kind === "gate" && !["clearAny", "clearDelta", "crowns", "playedAny", "happyAny"].includes(n.gateType))
-      error("starNodes", n.id, `gateType="${n.gateType}" が不正`);
+    if (n.kind === "gate" && !GATE_TYPES.includes(n.gateType)) error("starNodes", n.id, `gateType="${n.gateType}" が不正`);
+    if (n.kind !== "origin" && !(n.fromIds?.length > 0)) error("starNodes", n.id, "fromIds が空 (origin 以外は道が要る)");
   }
   for (const [cid, n] of Object.entries(origins)) if (n !== 1) error("starNodes", null, `characterId=${cid} の origin が ${n} 個`);
   for (const p of rows("starPresets")) {
@@ -204,11 +219,13 @@ export function validateMaster(tables, { requiredTextKeys = [] } = {}) {
   // systemTexts の網羅
   const textKeys = new Set(rows("systemTexts").map((t) => t.key));
   for (const key of requiredTextKeys) if (!textKeys.has(key)) warn("systemTexts", key, `T("${key}") が使われているが systemTexts に無い`);
+  for (const t of RECHARGE_TYPES)
+    if (!textKeys.has(`recharge.${t}`)) warn("systemTexts", `recharge.${t}`, `リチャージ条件の説明文 recharge.${t} が無い`);
 
   // config
   if (!tables.config) error("config", null, "config が無い");
   else {
-    for (const k of ["startSlots", "maxSlots", "shopSlots", "rerollPrice", "harshnessWeightMisfortune", "harshnessWeightStatus"]) {
+    for (const k of CONFIG_NUMBERS) {
       if (typeof tables.config[k] !== "number") error("config", null, `${k} が数値でない`);
     }
   }

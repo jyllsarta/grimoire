@@ -1,10 +1,10 @@
 // ============================================================
 // 効果モジュールのレジストリ (03「レジストリの並び」)。family ごとに **明示的に** 列挙する。
 // 並びは同 order の同点解決に使うので、並びを変えるのは設計変更。
-//   statuses → costumes → bookRules → passives → relics → star → items → abilities → enemyActions → eventEffects
+//   statuses → costumes → bookRules → passives → relics → star → items → abilities → enemyActions → eventEffects → choiceConditions
 // 検証 (master/validate.js) は「マスタの type 列 ∈ レジストリの key」と values schema をここから機械的に確認し、
 // tools/gen_schema.js が data/SCHEMA.md を生成する。
-// M1 は骨格 + 代表的なもの。残りは M2 で 1 モジュール 1 ファイルで足す。
+// tale のモジュールは必要になったヒロインの追加時に 1 モジュール 1 ファイルで足す (R3 Q2)。
 // ============================================================
 
 import poison from "./statuses/poison.js";
@@ -15,10 +15,12 @@ import sticky from "./statuses/sticky.js";
 import confusion from "./statuses/confusion.js";
 import power from "./statuses/power.js";
 import abilityDamage from "./statuses/abilityDamage.js";
+import evade from "./statuses/evade.js";
+import focus from "./statuses/focus.js";
 import powerDelta from "./statuses/powerDelta.js";
 import blockDelta from "./statuses/blockDelta.js";
-import dsUnique1 from "./statuses/unique/deathscythe/unique1.js";
-import dsUnique2 from "./statuses/unique/deathscythe/unique2.js";
+import dsCrystal from "./statuses/unique/deathscythe/crystal.js";
+import dsFever from "./statuses/unique/deathscythe/fever.js";
 
 import costumeNormal from "./costumes/normal.js";
 import costumeHalf from "./costumes/half.js";
@@ -27,10 +29,12 @@ import costumeSpecial1 from "./costumes/special1.js";
 
 import armorForbidden from "./bookRules/armorForbidden.js";
 import weaponCostPlus from "./bookRules/weaponCostPlus.js";
+import statusOnJustLethal from "./bookRules/statusOnJustLethal.js";
 
 import passivePierce from "./passives/pierce.js";
 import passiveDrain from "./passives/drain.js";
 import passivePoison from "./passives/poison.js";
+import passiveLethalThresholdPlus from "./passives/lethalThresholdPlus.js";
 
 import healEachTurn from "./relics/healEachTurn.js";
 import maxHpPlus from "./relics/maxHpPlus.js";
@@ -38,6 +42,10 @@ import slotPlus from "./relics/slotPlus.js";
 import basePowerPlus from "./relics/basePowerPlus.js";
 import battleStartShield from "./relics/battleStartShield.js";
 import weaponAttack from "./relics/weaponAttack.js";
+import lethalScythe from "./relics/lethalScythe.js";
+import lethalThresholdPlus from "./relics/lethalThresholdPlus.js";
+import firstTurnPierce from "./relics/firstTurnPierce.js";
+import battleStartStatus from "./relics/battleStartStatus.js";
 
 import starMaxHpPlus from "./star/maxHpPlus.js";
 import starMaxHpMinus from "./star/maxHpMinus.js";
@@ -53,17 +61,22 @@ import starStartRelic from "./star/startRelic.js";
 import starStartEquipment from "./star/startEquipment.js";
 import starStartItem from "./star/startItem.js";
 import starStartAbility from "./star/startAbility.js";
+import starChapterEnemy from "./star/chapterEnemy.js";
+import starMisfortuneCandidate from "./star/misfortuneCandidate.js";
 
 import itemInstantHeal from "./items/instantHeal.js";
 import itemAttack from "./items/attack.js";
+import itemPierceAttack from "./items/pierceAttack.js";
 import itemShield from "./items/shield.js";
 import itemWearCostume from "./items/wearCostume.js";
 
 import abilityAttack from "./abilities/attack.js";
 import abilityBlock from "./abilities/block.js";
+import abilitySelfStatus from "./abilities/selfStatus.js";
 
 import enemyAttack from "./enemyActions/attack.js";
 import enemyBlock from "./enemyActions/block.js";
+import enemyShield from "./enemyActions/shield.js";
 import enemyRest from "./enemyActions/rest.js";
 import enemySelfHarm from "./enemyActions/selfHarm.js";
 import enemyPierce from "./enemyActions/pierce.js";
@@ -77,14 +90,30 @@ import eventGainItem from "./eventEffects/gainItem.js";
 import eventGainAbility from "./eventEffects/gainAbility.js";
 import eventStatus from "./eventEffects/status.js";
 import eventCrossBreak from "./eventEffects/crossBreak.js";
+import eventLoseAllEntities from "./eventEffects/loseAllEntities.js";
+import eventLoseAllCoins from "./eventEffects/loseAllCoins.js";
+import eventHarshness from "./eventEffects/harshness.js";
+
+import wingsAndInventoryAtMost from "./choiceConditions/wingsAndInventoryAtMost.js";
 
 export const REGISTRY = {
   // ステートは並びが意味を持つ (フックの同点解決の順)
-  status: [poison, sleep, paralyze, arousal, sticky, confusion, power, abilityDamage, powerDelta, blockDelta, dsUnique1, dsUnique2],
+  status: [poison, sleep, paralyze, arousal, sticky, confusion, power, abilityDamage, evade, focus, powerDelta, blockDelta, dsCrystal, dsFever],
   costume: [costumeNormal, costumeHalf, costumeFull, costumeSpecial1],
-  bookRule: [armorForbidden, weaponCostPlus],
-  passive: [passivePierce, passiveDrain, passivePoison],
-  relic: [healEachTurn, maxHpPlus, slotPlus, basePowerPlus, battleStartShield, weaponAttack],
+  bookRule: [armorForbidden, weaponCostPlus, statusOnJustLethal],
+  passive: [passivePierce, passiveDrain, passivePoison, passiveLethalThresholdPlus],
+  relic: [
+    healEachTurn,
+    maxHpPlus,
+    slotPlus,
+    basePowerPlus,
+    battleStartShield,
+    weaponAttack,
+    lethalScythe,
+    lethalThresholdPlus,
+    firstTurnPierce,
+    battleStartStatus,
+  ],
   star: [
     starMaxHpPlus,
     starMaxHpMinus,
@@ -100,14 +129,40 @@ export const REGISTRY = {
     starStartEquipment,
     starStartItem,
     starStartAbility,
+    starChapterEnemy,
+    starMisfortuneCandidate,
   ],
-  item: [itemInstantHeal, itemAttack, itemShield, itemWearCostume],
-  ability: [abilityAttack, abilityBlock],
-  enemyAction: [enemyAttack, enemyBlock, enemyRest, enemySelfHarm, enemyPierce, enemyBlitz, enemyCrossBreak],
-  eventEffect: [eventCoins, eventHp, eventGainEquipment, eventGainItem, eventGainAbility, eventStatus, eventCrossBreak],
+  item: [itemInstantHeal, itemAttack, itemPierceAttack, itemShield, itemWearCostume],
+  ability: [abilityAttack, abilityBlock, abilitySelfStatus],
+  enemyAction: [enemyAttack, enemyBlock, enemyShield, enemyRest, enemySelfHarm, enemyPierce, enemyBlitz, enemyCrossBreak],
+  eventEffect: [
+    eventCoins,
+    eventHp,
+    eventGainEquipment,
+    eventGainItem,
+    eventGainAbility,
+    eventStatus,
+    eventCrossBreak,
+    eventLoseAllEntities,
+    eventLoseAllCoins,
+    eventHarshness,
+  ],
+  choiceCondition: [wingsAndInventoryAtMost],
 };
 
-const FAMILY_ORDER = ["status", "costume", "bookRule", "passive", "relic", "star", "item", "ability", "enemyAction", "eventEffect"];
+const FAMILY_ORDER = [
+  "status",
+  "costume",
+  "bookRule",
+  "passive",
+  "relic",
+  "star",
+  "item",
+  "ability",
+  "enemyAction",
+  "eventEffect",
+  "choiceCondition",
+];
 
 const all = FAMILY_ORDER.flatMap((family) => {
   const mods = REGISTRY[family];

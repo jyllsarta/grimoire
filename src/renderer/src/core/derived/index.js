@@ -27,6 +27,7 @@ import healPrice from "./heal_price.js";
 import rerollPrice from "./reroll_price.js";
 import battleStartShield from "./battle_start_shield.js";
 import harshnessScore from "./harshness_score.js";
+import lethalThreshold from "./lethal_threshold.js";
 
 const ALL = [
   maxHp,
@@ -51,6 +52,7 @@ const ALL = [
   rerollPrice,
   battleStartShield,
   harshnessScore,
+  lethalThreshold,
 ];
 
 export const DERIVED = Object.fromEntries(ALL.map((d) => [d.name, d]));

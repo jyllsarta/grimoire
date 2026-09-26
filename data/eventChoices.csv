@@ -1,6 +1,8 @@
-_isTrial:integer,_isCien:integer,_isClean:integer,id:integer,label:string,resultText:string,effects[0].type:string,effects[0].value:integer,effects[1].type:string,effects[1].value:integer
-,,,111,いたた…,転んで衣装がやぶれた。ライフ -2。,hp,-2,crossBreak,0
-,,,121,むりに引きぬく,鎌は抜けたが衣装がやぶれた。,crossBreak,0,,
-,,,122,あきらめて置いていく,コイン -2 で人に頼んだ。,coins,-2,,
-,,,9011,あけてみる,コインがざくざく出てきた！,coins,5,,
-,,,9012,そっとしておく,箱はしずかに消えていった。,,,,
+_isTrial:integer,_isCien:integer,_isClean:integer,id:integer,label:string,resultText:string,condition.type:string,condition.values:intarray,effects[0].type:string,effects[0].value:integer,effects[0].value2:integer,effects[1].type:string,effects[1].value:integer,effects[1].value2:integer
+,,,111,リュックを落としちゃった,リュックが暗闇に落ちていった。武器・防具・アイテムを全部失った。,,,loseAllEntities,,,,,
+,,,112,財布を落としちゃった,財布が暗闇に落ちていった。コインを全部失った。,,,loseAllCoins,,,,,
+,,,131,浸かる (毒沼だった！),沼は毒沼だった！ どく 3。,,,status,1,3,,,
+,,,132,浸かる (媚薬沼だった！),沼は媚薬沼だった！ はつじょう 3、過酷さ +1。,,,status,4,3,harshness,1,
+,,,133,水溜まりを飛び越えた,羽ばたいて飛び越えた。被害なし。,wingsAndInventoryAtMost,[4],,,,,,
+,,,9011,あけてみる,コインがざくざく出てきた！,,,coins,5,,,,
+,,,9012,そっとしておく,箱はしずかに消えていった。,,,,,,,,

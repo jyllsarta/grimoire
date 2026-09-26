@@ -3,12 +3,13 @@ export default [
   {
     "id": 1,
     "bookId": 1,
-    "key": "weaponCostPlus",
+    "key": "statusOnJustLethal",
     "values": [
+      10,
       1
     ],
-    "name": "武器の呪い",
-    "description": "武器パネルの回収コスト +1。",
+    "name": "死神の本のルール",
+    "description": "ジャストリーサルすると「こうちょう」を得る (次の 1 回のこうげき +2)。",
     "icon": "kama"
   }
 ];

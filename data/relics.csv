@@ -1,7 +1,11 @@
 _isTrial:integer,_isCien:integer,_isClean:integer,id:integer,characterId:integer,name:string,description:string,icon:string,rarity:integer,price:integer,crownPrice:integer,type:string,values:intarray,locked:boolean
 ,,,1,-1,でっかいカバン,インベントリ容量 +2。,backpack,1,5,0,slotPlus,[2],
 ,,,2,-1,パワーカプセル,基礎こうげき +1。,adrenaline,3,0,2,basePowerPlus,[1],
-,,,3,-1,チョバムアーマー,最大ライフ +10。,life,1,5,0,maxHpPlus,[10],
+,,,3,-1,チョバムアーマー,最大ライフ +10 (手に入れたときライフも +10)。,life,1,5,0,maxHpPlus,[10],
 ,,,4,-1,無限わかめ,毎ターン終了時、ライフ +1。,infinity,3,0,2,healEachTurn,[1],
 ,,,5,-1,ゾルタンシールド,毎バトル、シールド 5 を持って開始。,barrier,3,0,2,battleStartShield,[5],
 ,,,6,-1,トゲトゲ,ON の武器 1 本ごとに攻撃力 +1。,kama,1,5,0,weaponAttack,[1],
+,,,11,1,リーサルサイズ,行動のあと、敵のライフが 2 以下なら倒す。この倒し方はジャストリーサルになる。デスサイズちゃんの初期レリック。,kama,1,0,0,lethalScythe,[2],
+,,,12,1,死神の目,リーサルサイズの発動対象ライフ +1。,througheyes,2,6,1,lethalThresholdPlus,[1],
+,,,13,1,初太刀,バトル 1 ターン目のこうげきが貫通になる (ブロックもシールドも無視)。,flash,1,5,0,firstTurnPierce,[],
+,,,14,1,身かわしの心得,バトル開始時、かいひ 1 を得る。,feather,2,6,1,battleStartStatus,"[9,1]",

@@ -1,4 +1,4 @@
-// 毒 (04): player.tick でスタック値ダメージ (ブロック・シールド貫通) → -1。回復で全消し。敵側は enemy.act.begin で同じ処理
+// 毒 (04): player.tick でスタック値ダメージ (ブロック・シールド貫通) → -1。回復で全消し。敵側は enemy.act.begin で同じ処理 (敵のブロックもシールドも貫通)
 import { defineEffect } from "../define.js";
 
 function tick(ctx, src, holder, damage) {
@@ -28,7 +28,8 @@ export default defineEffect({
     "enemy.act.begin": {
       order: 600,
       when: (ctx, src) => src.side === "enemy",
-      run: (ctx, src) => tick(ctx, src, ctx.enemy(), (n) => ctx.damageEnemy(n, { tag: "poison", ignoreBlock: true, source: src })),
+      run: (ctx, src) =>
+        tick(ctx, src, ctx.enemy(), (n) => ctx.damageEnemy(n, { ignoreBlock: true, pierceShield: true, tag: "poison", source: src })),
     },
   },
 });

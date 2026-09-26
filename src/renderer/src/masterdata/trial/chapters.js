@@ -3,19 +3,20 @@ export default [
   {
     "id": 1,
     "name": "一章 はじまりのページ",
-    "description": "仮データ。",
+    "description": "シールドを持つ敵が多い。クナイの貫通でリーサルサイズを狙おう。",
     "width": 3,
     "healPrice": 1,
     "clearJewelBonus": 10,
     "clearCrownBonus": 1,
     "enemyIds": [
-      901,
-      901,
-      901,
+      31,
+      31,
+      32,
+      33,
       1,
-      902
+      35
     ],
-    "bossEnemyId": 905,
+    "bossEnemyId": 51,
     "equipmentIds": [
       1003
     ],
@@ -24,31 +25,32 @@ export default [
     ],
     "abilityIds": [],
     "eventIds": [
-      901,
-      1
+      13
     ],
-    "battleBg": "character1",
+    "battleBg": "character11",
     "bgmId": "chara1"
   },
   {
     "id": 2,
     "name": "二章 ふかまるページ",
-    "description": "仮データ。",
+    "description": "罠と毒。固有の敵が出はじめる。",
     "width": 3,
-    "healPrice": 1,
+    "healPrice": 2,
     "clearJewelBonus": 20,
     "clearCrownBonus": 2,
     "enemyIds": [
-      901,
-      902,
-      902,
-      903,
+      32,
+      33,
+      34,
+      36,
       2,
-      904
+      3,
+      37
     ],
-    "bossEnemyId": 906,
+    "bossEnemyId": 52,
     "equipmentIds": [
-      1004
+      1004,
+      1005
     ],
     "itemIds": [
       2003
@@ -57,58 +59,65 @@ export default [
       3002
     ],
     "eventIds": [
-      2
+      1,
+      13
     ],
-    "battleBg": "character1",
+    "battleBg": "character16",
     "bgmId": "chara1"
   },
   {
     "id": 3,
     "name": "三章 おわりのページ",
-    "description": "仮データ。",
+    "description": "ぶあつい鎧とクロスブレイク。",
     "width": 3,
-    "healPrice": 1,
+    "healPrice": 3,
     "clearJewelBonus": 30,
     "clearCrownBonus": 3,
     "enemyIds": [
-      902,
-      903,
-      903,
-      904,
-      904,
-      3,
-      910
+      34,
+      36,
+      37,
+      38,
+      39,
+      4,
+      35
     ],
-    "bossEnemyId": 907,
+    "bossEnemyId": 53,
     "equipmentIds": [
-      1005
+      1005,
+      1006
     ],
-    "itemIds": [],
+    "itemIds": [
+      2001
+    ],
     "abilityIds": [],
-    "eventIds": [],
-    "battleBg": "character1",
+    "eventIds": [
+      13
+    ],
+    "battleBg": "character54",
     "bgmId": "chara1"
   },
   {
     "id": 4,
     "name": "Extra 呪いの正体",
-    "description": "仮データ。過酷さが閾値以上なら幕間の後に入る。",
+    "description": "過酷さが閾値以上なら幕間の後に入る。道中の先に呪いの本体。",
     "width": 3,
-    "healPrice": 1,
+    "healPrice": 3,
     "clearJewelBonus": 0,
     "clearCrownBonus": 3,
     "enemyIds": [
-      904,
-      909,
-      910,
+      38,
+      39,
+      39,
+      2,
       4
     ],
-    "bossEnemyId": 908,
+    "bossEnemyId": 54,
     "equipmentIds": [],
     "itemIds": [],
     "abilityIds": [],
     "eventIds": [],
-    "battleBg": "character1",
+    "battleBg": "character55",
     "bgmId": "chara1"
   },
   {
@@ -143,7 +152,7 @@ export default [
     "eventIds": [
       901
     ],
-    "battleBg": "character1",
+    "battleBg": "character11",
     "bgmId": "chara1"
   }
 ];

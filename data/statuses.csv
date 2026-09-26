@@ -7,8 +7,10 @@ _isTrial:integer,_isCien:integer,_isClean:integer,id:integer,key:string,kind:str
 ,,,6,confusion,common,bad,player,stack,-1,こんらん,インベントリがシャッフルされ、中身が見えない。,confusion,status_confusion,,[],,6
 ,,,7,power,common,good,player,permanent,-1,こうげきアップ,この章のあいだ こうげき +n。,adrenaline,,,[],,7
 ,,,8,abilityDamage,common,good,player,permanent,-1,アビリティアップ,この章のあいだ アビリティダメージ +n。,comet,,,[],,8
-,,,11,ds_unique1,unique,bad,player,turn,1,とろとろ,デスサイズちゃん固有 1 (仮): こうげき -2。,poison,unique_ds_unique1,,[],,11
-,,,12,ds_unique2,unique,bad,player,turn,1,ふわふわ,デスサイズちゃん固有 2 (仮): 被ダメ +1。,heart,unique_ds_unique2,,[],,12
+,,,9,evade,common,good,player,permanent,-1,かいひ,敵の次の通常攻撃を 1 回だけ無効化 (1 ターンに 2 回攻撃されたら 2 回目は当たる)。,feather,,,[],,9
+,,,10,focus,common,good,player,permanent,-1,こうちょう,次の 1 回の通常攻撃のダメージ +2。,adrenaline,,,[2],,10
+,,,11,ds_crystal,unique,bad,player,turn,1,けっしょうか,足が結晶に包まれて、バトルから逃げられない。,crystal,unique_ds_crystal,,[],,11
+,,,12,ds_fever,unique,bad,player,turn,1,たいおんじょうしょう,服を脱ぎ捨ててしまった。衣装は完全に破れ、なおすこともできない。,fire,unique_ds_fever,,[],,12
 ,,,21,normal,costume,neutral,player,permanent,-1,ふつうの衣装,,,costume_normal,,[],half,21
 ,,,22,half,costume,neutral,player,permanent,-1,衣装半破壊,こうげき -1。,,costume_half,,[],full,22
 ,,,23,full,costume,neutral,player,permanent,-1,衣装破壊,こうげき -1、被ダメ +1。,,costume_full,,[],full,23

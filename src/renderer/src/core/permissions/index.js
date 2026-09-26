@@ -7,9 +7,11 @@ import canActivateEquipment from "./can_activate_equipment.js";
 import canUseAbility from "./can_use_ability.js";
 import canUseItem from "./can_use_item.js";
 import canAct from "./can_act.js";
+import canFlee from "./can_flee.js";
 import canApplyStatus from "./can_apply_status.js";
+import canRepairCostume from "./can_repair_costume.js";
 
-const ALL = [canActivateEquipment, canUseAbility, canUseItem, canAct, canApplyStatus];
+const ALL = [canActivateEquipment, canUseAbility, canUseItem, canAct, canFlee, canApplyStatus, canRepairCostume];
 
 export const PERMISSIONS = Object.fromEntries(ALL.map((p) => [p.name, p]));
 export const PERMISSION_NAMES = ALL.map((p) => p.name);

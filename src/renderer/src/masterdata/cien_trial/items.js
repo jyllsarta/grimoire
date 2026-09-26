@@ -21,7 +21,7 @@ export default [
     "id": 2002,
     "characterId": 1,
     "name": "ファイアクラッカー",
-    "description": "投げるとはでに爆発。5 ダメージ。",
+    "description": "投げるとはでに爆発。5 ダメージ (ブロック無視)。",
     "icon": "fire",
     "durability": 1,
     "type": "attack",
@@ -48,6 +48,23 @@ export default [
     "cost": 2,
     "price": 4,
     "size": 2,
+    "locked": false,
+    "usableOutOfBattle": false
+  },
+  {
+    "id": 2011,
+    "characterId": 1,
+    "name": "クナイ",
+    "description": "投げると貫通 1 ダメージ (ブロックもシールドも無視)。3 回。",
+    "icon": "dash",
+    "durability": 3,
+    "type": "pierceAttack",
+    "values": [
+      1
+    ],
+    "cost": 1,
+    "price": 3,
+    "size": 1,
     "locked": false,
     "usableOutOfBattle": false
   },

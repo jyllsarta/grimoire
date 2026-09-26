@@ -6,4 +6,7 @@ _isTrial:integer,_isCien:integer,_isClean:integer,id:integer,characterId:integer
 ,,,1011,1,node,0,-120,[1001],maxHpMinus,[5],-1,,,ひよわ,最大ライフ -5。
 ,,,1012,1,node,-150,-240,[1011],enemyHpPlus,[2],-2,,,強い敵,全ての敵のライフ +2。
 ,,,1013,1,node,150,-240,[1011],badDurationPlus,[1],-2,,,呪われ体質,受ける状態異常 +1。
+,,,1014,1,node,300,-360,[1013],misfortuneCandidate,[13],-2,,,呪われ体質・沼,幕間で「怪しいプール」が売られるようになる。
+,,,1015,1,node,-300,-360,[1012],chapterEnemy,"[39,1]",-2,,,鎧の先ぶれ,一章に「呪い鎧」が 1 体増える。
 ,,,1021,1,gate,0,-360,"[1012,1013]",,[],0,clearAny,,深淵の入り口,本を 1 冊制覇すると開く。
+,,,1022,1,node,0,-480,[1021],startHpMinus,[10],-3,,,深淵,一章の開始ライフ -10。

@@ -34,7 +34,7 @@ export default [
     "id": 3,
     "characterId": -1,
     "name": "チョバムアーマー",
-    "description": "最大ライフ +10。",
+    "description": "最大ライフ +10 (手に入れたときライフも +10)。",
     "icon": "life",
     "rarity": 1,
     "price": 5,
@@ -86,6 +86,65 @@ export default [
     "crownPrice": 0,
     "type": "weaponAttack",
     "values": [
+      1
+    ],
+    "locked": false
+  },
+  {
+    "id": 11,
+    "characterId": 1,
+    "name": "リーサルサイズ",
+    "description": "行動のあと、敵のライフが 2 以下なら倒す。この倒し方はジャストリーサルになる。デスサイズちゃんの初期レリック。",
+    "icon": "kama",
+    "rarity": 1,
+    "price": 0,
+    "crownPrice": 0,
+    "type": "lethalScythe",
+    "values": [
+      2
+    ],
+    "locked": false
+  },
+  {
+    "id": 12,
+    "characterId": 1,
+    "name": "死神の目",
+    "description": "リーサルサイズの発動対象ライフ +1。",
+    "icon": "througheyes",
+    "rarity": 2,
+    "price": 6,
+    "crownPrice": 1,
+    "type": "lethalThresholdPlus",
+    "values": [
+      1
+    ],
+    "locked": false
+  },
+  {
+    "id": 13,
+    "characterId": 1,
+    "name": "初太刀",
+    "description": "バトル 1 ターン目のこうげきが貫通になる (ブロックもシールドも無視)。",
+    "icon": "flash",
+    "rarity": 1,
+    "price": 5,
+    "crownPrice": 0,
+    "type": "firstTurnPierce",
+    "values": [],
+    "locked": false
+  },
+  {
+    "id": 14,
+    "characterId": 1,
+    "name": "身かわしの心得",
+    "description": "バトル開始時、かいひ 1 を得る。",
+    "icon": "feather",
+    "rarity": 2,
+    "price": 6,
+    "crownPrice": 1,
+    "type": "battleStartStatus",
+    "values": [
+      9,
       1
     ],
     "locked": false

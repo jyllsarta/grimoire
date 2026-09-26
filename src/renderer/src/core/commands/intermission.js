@@ -17,8 +17,7 @@ export const commands = {
       state.wallet.crown -= price.crown;
       slot.soldOut = true;
       if (slot.kind === "relic") {
-        state.relics.push({ uid: ctx.uid(), defId: slot.defId, memo: {} });
-        ctx.emit("relicGain", { defId: slot.defId });
+        ctx.gainRelic(slot.defId, { source: { family: "shop", key: "buy" } });
       } else {
         state.ownedPanels.push({ kind: slot.kind, defId: slot.defId });
         ctx.emit("panelBuy", { kind: slot.kind, defId: slot.defId });

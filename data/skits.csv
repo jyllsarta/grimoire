@@ -1,3 +1,9 @@
 _isTrial:integer,_isCien:integer,_isClean:integer,id:integer,characterId:integer,key:string,type:string,trigger:string,name:string,releaseByLose:boolean,order:integer
 ,,,1,0,opening,talk,opening,はじまり,,1
 ,,,2,1,bookStart,talk,bookStart,本のはじまり,,2
+,,,3,1,bossBefore,talk,bossBefore,ぬしの気配,,3
+,,,4,1,bookClear,talk,bookClear,最後のページ,,4
+,,,5,1,extraStart,talk,extraStart,呪いの正体,,5
+,,,6,1,happyEnd,scene,happyEnd,ハッピーエンド,,6
+,,,7,1,normalEnd,scene,normalEnd,ノーマルエンド,,7
+,,,8,1,lose,scene,lose,敗北,TRUE,8

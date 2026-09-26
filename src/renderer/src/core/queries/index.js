@@ -8,14 +8,28 @@ import { derive, deriveWithBreakdown, DERIVED_NAMES } from "../derived/index.js"
 import { permission, PERMISSION_NAMES } from "../permissions/index.js";
 import { resolveHandlers } from "../steps/bus.js";
 import { ALL_STEP_NAMES } from "../steps/index.js";
-import { chapterSequence, currentChapterId, currentChapter } from "../domain/chapter.js";
+import { chapterSequence, currentChapterId, currentChapter, nextChapterId, chapterNumberOf } from "../domain/chapter.js";
 import { panelAt, currentRoutine, currentActions, deckSummary } from "../domain/board.js";
 import { battleEnemy } from "../domain/battle.js";
 import { adjacent } from "../domain/inventory.js";
+import { choiceAvailable as choiceAvailableWith } from "../domain/event.js";
 import { canDispatch, COMMAND_NAMES } from "../commands/index.js";
 import { master } from "../master/index.js";
 
-export { phaseOf, chapterSequence, currentChapterId, currentChapter, panelAt, currentRoutine, currentActions, deckSummary, battleEnemy, adjacent };
+export {
+  phaseOf,
+  chapterSequence,
+  currentChapterId,
+  currentChapter,
+  nextChapterId,
+  chapterNumberOf,
+  panelAt,
+  currentRoutine,
+  currentActions,
+  deckSummary,
+  battleEnemy,
+  adjacent,
+};
 export { DERIVED_NAMES, PERMISSION_NAMES };
 export const STEP_NAMES = ALL_STEP_NAMES;
 
@@ -27,9 +41,12 @@ export function q(state) {
     breakdown: (name, args) => deriveWithBreakdown(name, ctx, args),
     permission: (name, args) => permission(name, ctx, args),
     canAct: () => permission("canAct", ctx),
+    canFlee: () => permission("canFlee", ctx),
     canActivateEquipment: (entity) => permission("canActivateEquipment", ctx, { entity }),
     canUseAbility: (entity) => permission("canUseAbility", ctx, { entity }),
     canUseItem: (entity) => permission("canUseItem", ctx, { entity }),
+    choiceAvailable: (choice) => choiceAvailableWith(ctx, choice),
+    rechargeInfo: (entity) => rechargeInfo(entity),
   };
 }
 
@@ -50,6 +67,35 @@ export function damageBy(enemy, filter = {}) {
     .filter((d) => (filter.family ? d.source?.family === filter.family : true))
     .filter((d) => (filter.defId != null ? d.source?.defId === filter.defId : true))
     .reduce((a, d) => a + d.amount, 0);
+}
+
+// アビリティのリチャージ条件と進捗 (R3 Q20)。説明文は systemTexts の recharge.<type>
+export function rechargeInfo(entity) {
+  if (!entity || entity.kind !== "ability") return null;
+  const def = master.get("abilities", entity.defId);
+  const type = def.rechargeType || "none";
+  return {
+    type,
+    textKey: `recharge.${type}`,
+    progress: entity.ready ? null : entity.progress,
+    target: type === "none" ? null : (def.rechargeValue ?? 1),
+    ready: entity.ready === true,
+  };
+}
+
+// イベントの選択肢ごとの可否 (条件付き選択肢は伏せる)
+export function eventChoices(state, eventId) {
+  const ctx = createCtx(state);
+  const event = master.get("events", eventId);
+  return event.choiceIds.map((id, index) => {
+    const choice = master.get("eventChoices", id);
+    return { index, choice, available: choiceAvailableWith(ctx, choice), conditional: !!choice.condition?.type };
+  });
+}
+
+// 敵の行動予告 (R3 Q21): 次に実行するルーチン 1 つ
+export function nextRoutine(panel) {
+  return currentRoutine(panel);
 }
 
 // 本を持つ character = ヒロイン (00 の命名規則)

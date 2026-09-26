@@ -13,8 +13,9 @@ import { fireStep } from "./steps/bus.js";
 import { battleEnemy, battlePanel } from "./domain/battle.js";
 import { damagePlayer, damageEnemy } from "./verbs/damage.js";
 import { heal } from "./verbs/heal.js";
-import { applyStatus, addBuff } from "./verbs/status.js";
+import { applyStatus, addBuff, removeStatus } from "./verbs/status.js";
 import { gain, spend, recharge } from "./verbs/inventory.js";
+import { gainRelic } from "./verbs/relic.js";
 import { setCostume, crossBreak } from "./verbs/costume.js";
 import { readMemo, writeMemo } from "./verbs/memo.js";
 
@@ -50,8 +51,10 @@ export function createCtx(state) {
     damageEnemy: (n, opts) => damageEnemy(ctx, n, opts),
     heal: (n, opts) => heal(ctx, n, opts),
     applyStatus: (target, key, value, opts) => applyStatus(ctx, target, key, value, opts),
+    removeStatus: (target, key, opts) => removeStatus(ctx, target, key, opts),
     addBuff: (side, key, value, turns) => addBuff(ctx, side, key, value, turns),
     gain: (kind, defId, opts) => gain(ctx, kind, defId, opts),
+    gainRelic: (defId, opts) => gainRelic(ctx, defId, opts),
     spend: (entity) => spend(ctx, entity),
     recharge: (type, amount, opts) => recharge(ctx, type, amount, opts),
     setCostume: (key, cause) => setCostume(ctx, key, cause),

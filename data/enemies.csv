@@ -1,19 +1,33 @@
-_isTrial:integer,_isCien:integer,_isClean:integer,id:integer,kind:string,slot:integer,characterId:integer,name:string,description:string,icon:string,reward:integer,hp:integer
-,,,1,placeholder,1,,入替ダミー 1,挑戦中ヒロインの固有 1 Lv1 に置き換わる。,enemy,1,1
-,,,2,placeholder,2,,入替ダミー 2,挑戦中ヒロインの固有 1 Lv2 に置き換わる。,enemy,1,1
-,,,3,placeholder,3,,入替ダミー 3,挑戦中ヒロインの固有 2 Lv1 に置き換わる。,enemy,1,1
-,,,4,placeholder,4,,入替ダミー 4,挑戦中ヒロインの固有 2 Lv2 に置き換わる。,enemy,1,1
-,,,101,characterUnique,1,1,とろとろスライム,デスサイズちゃん固有 1 Lv1 (仮)。,enemy,1,6
-,,,102,characterUnique,2,1,とろとろキング,デスサイズちゃん固有 1 Lv2 (仮)。,enemy2,1,9
-,,,103,characterUnique,3,1,ふわふわもや,デスサイズちゃん固有 2 Lv1 (仮)。,enemy,1,7
-,,,104,characterUnique,4,1,ふわふわぬし,デスサイズちゃん固有 2 Lv2 (仮)。,enemy2,1,10
-,,,901,normal,,,弱い敵,テスト用 (9 系)。,enemy,1,5
-,,,902,normal,,,毒の敵,テスト用 (9 系)。,enemy,1,7
-,,,903,normal,,,ブロックの敵,テスト用 (9 系)。,enemy,1,6
-,,,904,normal,,,すばやい敵,テスト用 (9 系)。,enemy,1,8
-,,,905,normal,,,一章のぬし,テスト用 (9 系)。,enemy2,2,15
-,,,906,normal,,,二章のぬし,テスト用 (9 系)。,enemy2,2,22
-,,,907,normal,,,三章のぬし,テスト用 (9 系)。,enemy2,3,30
-,,,908,normal,,,呪いの本体,テスト用 (9 系)。Extra Chapter のぬし。,enemy2,5,40
-,,,909,normal,,,クロスブレイカー,テスト用 (9 系)。,enemy,1,10
-,,,910,normal,,,眠りの敵,テスト用 (9 系)。,enemy,1,8
+_isTrial:integer,_isCien:integer,_isClean:integer,id:integer,kind:string,slot:integer,characterId:integer,name:string,description:string,icon:string,reward:integer,hp:integer,shield:integer
+,,,1,placeholder,1,,入替ダミー 1,挑戦中ヒロインの固有 1 Lv1 に置き換わる。,enemy,1,1,
+,,,2,placeholder,2,,入替ダミー 2,挑戦中ヒロインの固有 1 Lv2 に置き換わる。,enemy,1,1,
+,,,3,placeholder,3,,入替ダミー 3,挑戦中ヒロインの固有 2 Lv1 に置き換わる。,enemy,1,1,
+,,,4,placeholder,4,,入替ダミー 4,挑戦中ヒロインの固有 2 Lv2 に置き換わる。,enemy,1,1,
+,,,31,normal,,,シールドこうもり,うすい殻をまとったこうもり。,rabbit,1,5,2
+,,,32,normal,,,かたいカメ,甲羅がぶあつい。,skeleton,1,6,4
+,,,33,normal,,,とげとげ,さわるといたい。,nasu,1,7,2
+,,,34,normal,,,まもりの精,シールドを張りなおしてくる。,enemy,1,8,5
+,,,35,normal,,,すばやいネズミ,先手を取ってくる。,rabbit,1,6,0
+,,,36,normal,,,毒トカゲ,かみつくと毒。,nasu,1,8,3
+,,,37,normal,,,眠り花,あまい香りで眠らせる。,negi,1,9,3
+,,,38,normal,,,クロスブレイカー,衣装をやぶってくる。,skeleton,1,10,4
+,,,39,normal,,,呪い鎧,ぶあついシールド。貫通でしか削れない。,armor,2,12,6
+,,,51,normal,,,一章のぬし,一章のぬし。,enemy2,2,14,4
+,,,52,normal,,,二章のぬし,二章のぬし。,enemy2,2,18,5
+,,,53,normal,,,三章のぬし,三章のぬし。,enemy2,3,24,6
+,,,54,normal,,,呪いの本体,Extra Chapter のぬし。本の呪いそのもの。,enemy2,5,32,8
+,,,101,characterUnique,1,1,結晶のクモ,足を結晶で固めてくる (固有 1 Lv1)。,enemy,1,6,2
+,,,102,characterUnique,2,1,結晶の女王,結晶のクモの女王 (固有 1 Lv2)。,enemy2,1,10,4
+,,,103,characterUnique,3,1,ほてりのランプ,体温を上げてくる (固有 2 Lv1)。,enemy,1,7,2
+,,,104,characterUnique,4,1,ほてりのぬし,ほてりのランプのぬし (固有 2 Lv2)。,enemy2,1,11,4
+,,,901,normal,,,弱い敵,テスト用 (9 系)。,enemy,1,5,
+,,,902,normal,,,毒の敵,テスト用 (9 系)。,enemy,1,7,
+,,,903,normal,,,ブロックの敵,テスト用 (9 系)。,enemy,1,6,
+,,,904,normal,,,すばやい敵,テスト用 (9 系)。,enemy,1,8,
+,,,905,normal,,,一章のぬし (テスト),テスト用 (9 系)。,enemy2,2,15,
+,,,906,normal,,,二章のぬし (テスト),テスト用 (9 系)。,enemy2,2,22,
+,,,907,normal,,,三章のぬし (テスト),テスト用 (9 系)。,enemy2,3,30,
+,,,908,normal,,,呪いの本体 (テスト),テスト用 (9 系)。,enemy2,5,40,
+,,,909,normal,,,クロスブレイカー (テスト),テスト用 (9 系)。,enemy,1,10,
+,,,910,normal,,,眠りの敵,テスト用 (9 系)。,enemy,1,8,
+,,,911,normal,,,シールドの敵,テスト用 (9 系)。シールド 3。,enemy,1,5,3

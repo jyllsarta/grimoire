@@ -8,6 +8,6 @@ export default defineEffect({
   text: { shape: "selfHarm" },
   use: (ctx, src, action) => {
     ctx.emit("enemySelfHarm", { value: action.value });
-    ctx.damageEnemy(action.value ?? 0, { ignoreBlock: true, tag: "self", source: src });
+    ctx.damageEnemy(action.value ?? 0, { ignoreBlock: true, pierceShield: true, tag: "self", source: src });
   },
 });

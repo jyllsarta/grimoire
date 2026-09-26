@@ -70,7 +70,7 @@ export default [
     "id": 1005,
     "characterId": 1,
     "name": "スマッシュレイピア",
-    "description": "相手のブロックを無視する。",
+    "description": "相手のブロックとシールドを無視する。",
     "icon": "bow",
     "category": "weapon",
     "durability": 3,
@@ -120,5 +120,26 @@ export default [
     "price": 4,
     "size": 1,
     "locked": false
+  },
+  {
+    "id": 1011,
+    "characterId": 1,
+    "name": "クリティカルナイフ",
+    "description": "この武器で攻撃するターン、リーサルサイズの発動対象ライフ +3。",
+    "icon": "hocho",
+    "category": "weapon",
+    "durability": 3,
+    "power": 2,
+    "block": 0,
+    "cost": 2,
+    "price": 5,
+    "size": 2,
+    "locked": false,
+    "passive": {
+      "type": "lethalThresholdPlus",
+      "values": [
+        3
+      ]
+    }
   }
 ];

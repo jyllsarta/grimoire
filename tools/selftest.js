@@ -1,5 +1,5 @@
 // =====================================================================
-// selftest (08): レジストリ駆動のマスタ検証 + ボット N ラン (勝率は参考値)。import.js の後に自動で回る。
+// selftest (08): レジストリ駆動のマスタ検証 + ボット N ラン (勝率は参考値、到達章を測る。R3 Q4)。import.js の後に自動で回る。
 //   node tools/selftest.js            … base profile で検証 + 30 ラン
 //   node tools/selftest.js --runs 200
 //   node tools/selftest.js --profile trial
@@ -57,6 +57,8 @@ if (errors.length === 0) {
         happy = 0,
         losses = 0,
         bad = 0;
+      const reached = {};
+      let reachedSum = 0;
       for (let seed = 1; seed <= runs; seed++) {
         const r = runGame({ characterId: heroine.id, bookId: book.id, seed, checkInvariants: true });
         if (!r.ok) {
@@ -68,12 +70,21 @@ if (errors.length === 0) {
         if (r.result?.ending === "normal") wins += 1;
         if (r.result?.ending === "happy") happy += 1;
         if (r.result?.ending === "lose") losses += 1;
+        const c = r.state?.counters?.chaptersCleared ?? 0;
+        reached[c] = (reached[c] || 0) + 1;
+        reachedSum += c;
       }
-      stats.push(`  ${heroine.name} × ${book.name}: normal ${wins} / happy ${happy} / lose ${losses} / NG ${bad} (${runs} ラン)`);
+      const dist = Object.keys(reached)
+        .sort((a, b) => a - b)
+        .map((k) => `${k}章クリア:${reached[k]}`)
+        .join(" ");
+      stats.push(
+        `  ${heroine.name} × ${book.name}: normal ${wins} / happy ${happy} / lose ${losses} / NG ${bad} (${runs} ラン)。到達 平均 ${(reachedSum / runs).toFixed(2)} 章 [${dist}]`,
+      );
       if (bad > 0) botFailed = true;
     }
   }
-  console.log("[selftest] ボット (勝率は参考値):");
+  console.log("[selftest] ボット (貪欲法。クリアは必須ではなく、到達章が指標):");
   for (const s of stats) console.log(s);
 }
 

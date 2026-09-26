@@ -1,14 +1,17 @@
 // 動詞: gain / spend / recharge (インベントリの実体を増減する横断規則)
 import { master } from "../master/index.js";
 import { createEntity, entitySize } from "../domain/entity.js";
-import { findFreePos, removeEntity } from "../domain/inventory.js";
+import { findFreePos, isFreeAt, removeEntity } from "../domain/inventory.js";
 import { describeSource } from "./_source.js";
 
-// 空きがあれば配置して entity.gained。無ければ progress.pending に積む
-export function gain(ctx, kind, defId, { source = null } = {}) {
+// 空きがあれば配置して entity.gained。無ければ progress.pending に積む。
+// preferPos: その位置に入るならそこへ (R3 Q8: 使い切った同じ位置に代替を置く)。入らなければ通常の最左
+export function gain(ctx, kind, defId, { source = null, preferPos = null } = {}) {
   const state = ctx.state;
   const entity = createEntity(ctx.uid(), kind, defId);
-  const pos = findFreePos(state, entitySize(entity), ctx.derive("slotCount"));
+  const slotCount = ctx.derive("slotCount");
+  const size = entitySize(entity);
+  let pos = preferPos != null && isFreeAt(state, preferPos, size, slotCount) ? preferPos : findFreePos(state, size, slotCount);
   if (pos >= 0) {
     entity.pos = pos;
     state.inventory.entities.push(entity);

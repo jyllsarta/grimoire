@@ -1,7 +1,41 @@
 _isTrial:integer,_isCien:integer,_isClean:integer,id:integer,characterId:integer,key:string,faceId:integer,message:string,order:integer
-,,,1,1,welcome,2,よろしくね、おにーさん。,1
-,,,2,1,battleStart,15,バトルだ！ 気をつけて！,1
-,,,3,1,battleStart,4,そうびの ON と OFF、わすれずにね。,2
-,,,4,1,playerAttack,15,えいっ！,1
-,,,5,1,victory,31,やった！,1
-,,,6,1,damaged,14,いたっ…,1
+,,,1,1,welcome,2,…よろしくお願いします。,1
+,,,2,1,gameStart,1,行きましょう。駒はあなたが動かしてください。,1
+,,,3,1,chapterStart,1,…新しいページです。気を抜かないで。,1
+,,,4,1,chapterStart,4,足元に気をつけて。罠が多いところです。,2
+,,,5,1,peekEnemy,20,…敵です。やりますか。,1
+,,,6,1,peekTreasure,3,これは…使えそうですね。,1
+,,,7,1,peekEvent,10,何かあります。近づかない方が…。,1
+,,,8,1,battleStart,15,…斬ります。,1
+,,,9,1,battleStart,20,武器の ON と OFF、確認してください。,2
+,,,10,1,bossBattleStart,15,大物ですね。…構いません。,1
+,,,11,1,playerAttack,15,はっ。,1
+,,,12,1,playerAttack,15,…もう一度。,2
+,,,13,1,attackBlocked,4,硬い…。貫かないと。,1
+,,,14,1,parry,31,…読めました。,1
+,,,15,1,playerDamaged,14,っ…。,1
+,,,16,1,playerDamaged,14,大丈夫です。まだ。,2
+,,,17,1,hpDanger,13,…まずい。回復を。,1
+,,,18,1,itemUse,3,使います。,1
+,,,19,1,equipBreak,10,壊れました…替えは。,1
+,,,20,1,victory,31,…終わりです。,1
+,,,21,1,victory,1,次へ。,2
+,,,22,1,bossVictory,31,倒しました。…ふう。,1
+,,,23,1,flee,10,一度引きます。,1
+,,,24,1,treasureGet,3,いただきます。,1
+,,,25,1,inventoryFull,4,もう持てません。整理を。,1
+,,,26,1,eventResult,10,…こうなりましたか。,1
+,,,27,1,chapterClear,31,ページをめくります。,1
+,,,28,1,intermission,2,少し休みましょう。買い物も。,1
+,,,29,1,buy,3,ありがとうございます。,1
+,,,30,1,heal,2,…楽になりました。,1
+,,,31,1,idle,1,…。,1
+,,,32,1,idle,4,どうしますか。,2
+,,,33,1,poisoned,14,…毒が回っています。,1
+,,,34,1,clothBreak,13,きゃ…っ。見ないでください。,1
+,,,35,1,gameOver,14,…ここまで、ですか。,1
+,,,36,1,lethal,15,リーサル。,1
+,,,37,1,evade,31,かわしました。,1
+,,,38,1,badStatus,10,…嫌な感じです。,1
+,,,39,1,status.ds_crystal,13,足が…動きません。逃げられない。,1
+,,,40,1,status.ds_fever,13,暑い…。服が…。,1

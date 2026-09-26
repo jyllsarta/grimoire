@@ -14,7 +14,8 @@ describe("newRun", () => {
     expect(s.player.hp).toBe(q(s).derive("maxHp"));
     expect(s.board.cells.length).toBe(s.board.width * 2);
     expect(s.board.cells.every((c) => c != null)).toBe(true);
-    expect(s.inventory.entities.length).toBe(1); // startAbilityIds [3001]
+    expect(s.inventory.entities.length).toBe(0); // 固有パネルは山札で拾う (characters.start* は空)
+    expect(s.relics.map((r) => r.defId)).toEqual([11]); // characters.startRelicIds = リーサルサイズ
   });
   it("同じ seed なら同じ盤面", () => {
     const a = newRun({ characterId: 1, bookId: 1, seed: 5 });

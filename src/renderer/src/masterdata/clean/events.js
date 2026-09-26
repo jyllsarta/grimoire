@@ -25,27 +25,29 @@ export default [
     "kind": "misfortune",
     "slot": 1,
     "characterId": 1,
-    "name": "つまずいた",
-    "description": "デスサイズちゃんのドジ (仮)。",
+    "name": "逆さ吊りトラップ",
+    "description": "デスサイズちゃんが足取り軽くダンジョンを歩いていると、突然足首に縄が巻きつき、吊り下げられてしまった！罠だ！慌ててスカートを押さえようとするも、その時に持っていた物を落としてしまうーー",
     "icon": "himitsu2",
     "cutin": "cutin11",
     "choiceIds": [
-      111
+      111,
+      112
     ]
   },
   {
-    "id": 12,
+    "id": 13,
     "kind": "misfortune",
-    "slot": 2,
-    "characterId": 1,
-    "name": "鎌がひっかかった",
-    "description": "デスサイズちゃんの不運 (仮)。",
+    "characterId": -1,
+    "name": "怪しいプール",
+    "description": "デスサイズちゃんがウキウキでダンジョンを歩いていると、道が粘ついた深い水たまりで埋まっていた！ダンジョンの構造的に、回り道できないようだ。この怪しい水に浸かるしかない……",
     "icon": "himitsu3",
-    "cutin": "cutin12",
+    "cutin": "",
     "choiceIds": [
-      121,
-      122
-    ]
+      131,
+      132,
+      133
+    ],
+    "price": 3
   },
   {
     "id": 901,

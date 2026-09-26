@@ -33,3 +33,12 @@ export function nextChapterId(state) {
   const seq = chapterSequence(state);
   return seq[state.progress.chapterIndex + 1] ?? null;
 }
+
+// 章 id → 本の中での章番号 (chapterIds の 1 始まり、Extra Chapter は chapterIds.length + 1)。本に無ければ null
+export function chapterNumberOf(state, chapterId) {
+  const book = master.get("books", state.bookId);
+  const i = book.chapterIds.indexOf(chapterId);
+  if (i >= 0) return i + 1;
+  if (book.extraChapterId === chapterId) return book.chapterIds.length + 1;
+  return null;
+}

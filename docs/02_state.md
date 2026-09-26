@@ -20,7 +20,7 @@
 
 ```
 GameState
-├ schemaVersion            1
+├ schemaVersion            2 (M2: 敵の shield、counters.harshness.bonus)
 ├ meta                     { createdAt, updatedAt, appVersion, edition, difficulty }
 ├ rng                      { seed, s: [u32 ×4] }              決定的乱数 (xoshiro128**)。全部の抽選がここを進める
 ├ uidNext                  次に発行する uid (10001 から。見て uid と分かる値域)
@@ -35,7 +35,7 @@ GameState
 ├ board                    { chapterId, width, cells: [uid|null], panels: {uid: PanelInstance}, deck: [uid], boss: {uid, placed, defeated} }
 ├ battle                   null | { panelUid, step, cursor, turn, started, result, shield, buffs, delayed, turnMemo, memo }
 ├ shop                     null | { slots: [{kind, defId, soldOut, rare}], rerolls }
-├ counters                 { harshness: {misfortunes, statusHits, crossBreaks}, battles, kills, turns, flees, chaptersCleared }
+├ counters                 { harshness: {misfortunes, statusHits, crossBreaks, bonus}, battles, kills, turns, flees, chaptersCleared }
 └ memo                     ラン全体のモジュール記憶
 ```
 
@@ -147,6 +147,7 @@ EnemyState (kind=enemy のときだけ。**逃走してもここに残る**):
 | フィールド | 意味 |
 |---|---|
 | hp | 残りライフ (生成時に派生値 `enemyMaxHp(defId)` = マスタ hp + スター補正) |
+| shield | 敵のシールド (11)。生成時は `enemies.shield`、敵アクション `shield` で増える。貫通でない攻撃を HP より先に受け止め、ブロックと違って **バトルをまたいで残る** (逃走しても保持)。プレイヤーの `battle.shield` と対になる |
 | routineIndex | 次に実行するルーチンの番号 (enemyActions の order 順で回る) |
 | stunned | 次の行動をスキップするか (パリィ / スタン付与) |
 | block | このラウンドのブロック (自分の行動開始で 0 に戻る) |
@@ -182,9 +183,10 @@ EnemyState (kind=enemy のときだけ。**逃走してもここに残る**):
 | harshness.misfortunes | 再生した不利イベントの回数 |
 | harshness.statusHits | 状態異常 (bad) を付与された回数。重ね掛けも各 1、固有バステも含む、他ヒロインのスキップは数えない |
 | harshness.crossBreaks | クロスブレイクで衣装状態が実際に変わった回数 (full → full や固有バステ中の無効化は数えない) |
-| battles / kills / turns / flees / chaptersCleared | 統計と実績・ゲート判定用 |
+| harshness.bonus | イベント効果 `harshness` の直接加算 (怪しいプールの「追加で過酷さ +1」)。重みを掛けない |
+| battles / kills / turns / flees / chaptersCleared | 統計と実績・ゲート判定用。selftest のボットは chaptersCleared を「到達章」として集計する |
 
-過酷さの判定 = 派生値 `harshnessScore` (= misfortunes × config.harshnessWeightMisfortune + (statusHits + crossBreaks) × config.harshnessWeightStatus) と `books.harshnessThreshold` を比べる。
+過酷さの判定 = 派生値 `harshnessScore` (= misfortunes × config.harshnessWeightMisfortune + (statusHits + crossBreaks) × config.harshnessWeightStatus + bonus) と `books.harshnessThreshold` を比べる。
 
 ### memo
 
@@ -207,13 +209,13 @@ shop != null             → intermission
 | newRun(characterId, bookId, starSnapshot, difficulty, seed) | (state なし) | 全部 |
 | takePanel(cell) / takePanelArranged(cell, arrangement) / dumpPanel(cell) | chapter | board, inventory, wallet, pending |
 | startBattle(cell) | chapter | battle (step = `battle.start`) |
-| chooseEvent(cell, choiceIndex) | chapter | board, wallet, player, inventory, counters, pending |
+| chooseEvent(cell, choiceIndex) | chapter。選択肢に `condition` があれば満たすときだけ (reason `choiceLocked`) | board, wallet, player, inventory, counters, pending |
 | takeChapterClear(cell) | chapter | wallet, player, inventory, counters, そして shop (次章あり) か progress (最終章: 過酷さ判定で 達成 → stage=extra + shop / 未達 → ending=normal。Extra の章なら ending=happy) |
 | arrangeInventory(arrangement) | chapter, intermission | inventory |
 | useItem(uid) | battle (step = select)。`items.usableOutOfBattle` のものは chapter / intermission でも | player, battle, inventory, board.panels[].enemy |
 | toggleEquip(uid) / useAbility(uid) | battle (step = select) | inventory, battle, enemy |
 | attack() | battle (step = select) | step = `turn.command`、started |
-| flee() | battle (step = select) | step = `flee.command`、started |
+| flee() | battle (step = select)。許可 `canFlee` (結晶化中は不許可) | step = `flee.command`、started |
 | advance() | battle (step が select でも battle.end でもない) | そのステップの分だけ (03)。1 回で 1 ステップ |
 | cancelBattle() | battle (step = select、started=false) | battle=null |
 | closeBattle() | battle (step = battle.end) | battle=null |
@@ -240,7 +242,10 @@ shop != null             → intermission
 | 敵パネルの HP / ステートチップ / 予告 | `board.panels[uid].enemy.hp / statuses / routineIndex` |
 | インベントリ帯 | `inventory.entities` (pos, active, durability, ready, progress)、`inventory.concealed` |
 | 戦闘: ライフ / シールド | `player.hp` / `battle.shield` |
-| 戦闘: 敵 HP / ブロック / ステート / スタン / 予告 / 行動メモ | `board.panels[battle.panelUid].enemy.*` + マスタ enemyActions |
+| 戦闘: 敵 HP / シールド / ブロック / ステート / スタン / 予告 (次のルーチン 1 つ = query `nextRoutine`) / 行動メモ (全ルーチン) | `board.panels[battle.panelUid].enemy.*` + マスタ enemyActions |
+| 戦闘: にげる ボタンの結晶化テクスチャ | 許可 `canFlee` (= `player.unique` の結晶化。モジュールの `text.fleeOverlay`) |
+| イベントの選択肢 (条件付きは伏せる) | query `eventChoices(state, eventId)` の `available` / `conditional` |
+| アビリティのリチャージ条件と進捗 | query `rechargeInfo(entity)` = `{ type, textKey, progress, target, ready }`。説明文は systemTexts `recharge.<type>` |
 | 戦闘: ターン / 予約チップ / バフチップ | `battle.turn` / `battle.delayed` / `battle.buffs`, `enemy.buffs` |
 | 戦闘: いま何が起きているか (入力待ちか、演出中か、どの敵アクションか) | `battle.step` / `battle.cursor` / `battle.turnMemo.order` |
 | 攻撃ボタンの予測値 | 派生 `attackPower` の内訳 |
@@ -259,6 +264,7 @@ shop != null             → intermission
 - `battle.panelUid` は `board.cells` のどれかで、そのパネルは kind=enemy (`battle.result` が victory のときは例外: `battle.victory` の boardUpdate でパネルは取り除かれるか chapterClear に変わり、`closeBattle` を待つ)
 - `battle.step` は 03 のバトルステップ名のどれか。`cursor` は `enemy.action` のときだけ 0 以上 actions.length 以下、他は 0。`result` が立っているのに step が select のままになることはない
 - `player.statuses` の key は重複しない。value は 1 以上 (0 になったら消す)。`unique` の turns は 1 以上。敵の `statuses` も同じ
+- 敵の `shield` と `block` は 0 以上
 - `player.unique` が他ヒロインの固有バステを指さない (付与時にスキップ済み)
 - `progress.pending` が空でない間は phase=pending
 - 全部のフィールドが JSON で往復して同値 (`JSON.parse(JSON.stringify(s))` が deepEqual)

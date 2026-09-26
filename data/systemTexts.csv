@@ -41,7 +41,7 @@ _isTrial:integer,_isCien:integer,_isClean:integer,id:integer,key:string,text:str
 ,,,40,result.happy,ハッピーエンド
 ,,,41,result.lose,まけちゃった…
 ,,,42,result.abandoned,あきらめた
-,,,43,result.toMenu,メニューへ
+,,,43,result.toMenu,本えらびへ
 ,,,44,pending.heading,もちものがいっぱい
 ,,,45,pending.discard,受け取らない
 ,,,46,inventory.on,ON
@@ -65,3 +65,252 @@ _isTrial:integer,_isCien:integer,_isClean:integer,id:integer,key:string,text:str
 ,,,64,volume.bgm,BGM
 ,,,65,volume.se,こうかおん
 ,,,66,options.fast,せんとう高速化
+,,,67,reason.choiceLocked,いまは選べない
+,,,68,reason.crystal,足が結晶に包まれて逃げられない
+,,,69,reason.fever,体温上昇中は衣装をなおせない
+,,,70,reason.itemUseBlocked,いまは使えない
+,,,71,recharge.exhaust,アイテムか装備を使い切ると復活
+,,,72,recharge.justLethal,ジャストリーサルで復活
+,,,73,recharge.damageTaken,累計 {n} ダメージを受けると復活
+,,,74,recharge.turn,{n} ターン経過で復活
+,,,75,recharge.kill,敵を {n} 体倒すと復活
+,,,76,recharge.otherAbilityUse,ほかのアビリティを {n} 回使うと復活
+,,,77,recharge.none,復活しない
+,,,78,battle.enemyShield,シールド
+,,,79,battle.lethal,リーサルサイズ!
+,,,80,battle.evade,かわした!
+,,,81,battle.justLethal,ジャストリーサル!
+,,,82,title.subtitle,オラクルちゃんと呪いの本
+,,,83,title.savedata,セーブ管理
+,,,84,title.credits,クレジット
+,,,85,title.opening,オープニング
+,,,86,common.ok,けってい
+,,,87,common.cancel,やめる
+,,,88,common.letItBe,やめておく
+,,,89,common.attack,こうげき
+,,,90,common.block,ブロック
+,,,91,kind.equipment,そうび
+,,,92,kind.item,アイテム
+,,,93,kind.ability,アビリティ
+,,,94,kind.event,イベント
+,,,95,kind.relic,レリック
+,,,96,stat.power,こうげき {n}
+,,,97,stat.block,ブロック {n}
+,,,98,stat.durability,たいきゅう {n}
+,,,99,stat.size,サイズ {n}
+,,,100,stat.abilityUses,{n} 回
+,,,101,stat.ability,アビリティ
+,,,102,stat.uses,{n} 回
+,,,103,panel.chapterClearName,とびら
+,,,104,panel.bossSub,ぬし
+,,,105,panel.monsterSub,モンスター
+,,,106,panel.misfortuneSub,不利イベント
+,,,107,panel.eventSub,イベント
+,,,108,panel.chapterClearSub,つぎの章へ
+,,,109,panel.costLine,{n} コイン
+,,,110,panel.wallet,手持ち {n} コイン
+,,,111,panel.noRoom,インベントリに空きがない (もらうと整理になる)
+,,,112,inventory.heading,もちもの
+,,,113,inventory.organize,整理する
+,,,114,battle.memoHeading,{name} の行動メモ
+,,,115,battle.lethalChip,リーサル {n} 以下
+,,,116,battle.stunnedChip,スタン中
+,,,117,battle.stunBadge,スタン
+,,,118,battle.actionPierce,貫通!
+,,,119,fx.shieldAbsorb,シールド -{n}
+,,,120,fx.enemyBlocked,ブロックされた
+,,,121,fx.playerGuard,ブロック!
+,,,122,fx.blockGain,ブロック +{n}
+,,,123,fx.enemyShieldGain,シールド +{n}
+,,,124,fx.stunned,スタン!
+,,,125,fx.parry,パリィ!
+,,,126,fx.enemyRest,ようすを見ている
+,,,127,fx.enemySlow,先手をとられた (ねばねば)
+,,,128,fx.enemyBlitz,先手をとられた!
+,,,129,fx.shieldGain,シールド +{n}
+,,,130,fx.poisonCured,どくが消えた
+,,,131,fx.poisonGainNum,どく +{n}
+,,,132,fx.statusGain,{name} {n}
+,,,133,fx.statusSkipped,効かなかった
+,,,134,fx.weaponsForcedOff,しびれて武器が外れた
+,,,135,fx.confusionDeactivate,こんらんして装備が全部 OFF に
+,,,136,fx.crossBreak.full,衣装が破れた!
+,,,137,fx.crossBreak.normal,衣装がもどった
+,,,138,fx.crossBreak.half,衣装が半分破れた!
+,,,139,fx.crossBreak.same,これ以上は破れない
+,,,140,fx.crossBreakIgnored,体温上昇中は変わらない
+,,,141,fx.costumeChange,{name} に着がえた
+,,,142,fx.sleepSkip,ねむっている…
+,,,143,fx.sleepCured,目がさめた
+,,,144,fx.abilityReady,{name} が復活
+,,,145,fx.equipBreak,{name} がこわれた
+,,,146,fx.itemUsedUp,{name} を使い切った
+,,,147,fx.abilityBreak,{name} を使い切った
+,,,148,fx.relicProc,{name}
+,,,149,fx.bookRuleProc,本のルール: {name}
+,,,150,fx.victory,勝利! +{n} コイン
+,,,151,fx.flee,にげる…
+,,,152,fx.delayedFire,予約の発動
+,,,153,fx.gain,{name} を手に入れた
+,,,154,fx.pendingGain,{name} が入り切らない
+,,,155,fx.relicGain,レリック: {name}
+,,,156,fx.coinGain,コイン {n}
+,,,157,fx.loseEntities,もちものを全部落とした!
+,,,158,fx.harshnessGain,過酷さが増した
+,,,159,fx.rewards,ジュエル +{jewel} / クラウン +{crown}
+,,,160,fx.extraUnlocked,本の要求を満たした… Extra Chapter が開く
+,,,161,fx.bossAppear,ぬしが現れた
+,,,162,fx.chapterClearAppear,とびらがひらいた
+,,,163,skit.protagonist,おにーさん
+,,,164,skit.end,クリックで終わる
+,,,165,skit.next,▼ つぎへ
+,,,166,skit.skip,とばす
+,,,167,skit.sceneMissing,(この場面の絵は準備中)
+,,,168,skit.type.talk,会話
+,,,169,skit.type.scene,シーン
+,,,170,skit.trigger.opening,はじまり
+,,,171,skit.trigger.bookStart,本のはじまりで開放
+,,,172,skit.trigger.bossBefore,ぬしの前で開放
+,,,173,skit.trigger.bookClear,本の完走で開放
+,,,174,skit.trigger.extraStart,Extra Chapter で開放
+,,,175,skit.trigger.happyEnd,ハッピーエンドで開放
+,,,176,skit.trigger.normalEnd,ノーマルエンドで開放
+,,,177,skit.trigger.lose,敗北で開放
+,,,178,event.head,イベント
+,,,179,event.misfortuneHead,不利イベント
+,,,180,event.lockedLabel,？？？
+,,,181,event.fx.coins,コイン {n}
+,,,182,event.fx.hp,ライフ {n}
+,,,183,event.fx.gain,{name} を手に入れる
+,,,184,event.fx.crossBreak,クロスブレイク
+,,,185,event.fx.loseAllEntities,もちものを全部失う
+,,,186,event.fx.loseAllCoins,コインを全部失う
+,,,187,event.fx.harshness,過酷さ +{n}
+,,,188,pending.note,{name} が入り切らない。並べ替えて置くか、受け取らない
+,,,189,organize.hintDrag,ドラッグで並べ替え。上に放ると棚へ
+,,,190,organize.hintPlace,空いているマスをクリックして置く
+,,,191,organize.slots,スロット {n} / {max}
+,,,192,organize.shelfEmpty,棚は空
+,,,193,detail.clickToClose,右クリックでとじる
+,,,194,detail.enemyHp,ライフ
+,,,195,detail.reward,ほうび
+,,,196,detail.coinN,{n} コイン
+,,,197,detail.remaining,のこり
+,,,198,detail.state,状態
+,,,199,detail.recharge,復活条件
+,,,200,detail.progress,進み
+,,,201,detail.cost,回収価格
+,,,202,detail.rightClick,右クリックで詳細
+,,,203,status.kind.common,ステート
+,,,204,status.kind.unique,固有バステ
+,,,205,status.kind.costume,衣装
+,,,206,status.kind.buff,バフ
+,,,207,enemy.kind.normal,モンスター
+,,,208,enemy.kind.characterUnique,固有の敵
+,,,209,enemy.kind.placeholder,入替ダミー
+,,,210,deck.summary,のこり {n} 枚 (モンスター {m})
+,,,211,options.muteOnBlur,ほかの窓のときは消音
+,,,212,options.fullscreen,フルスクリーン
+,,,213,options.language,言語
+,,,214,options.language.ja_jp,日本語
+,,,215,savedata.heading,セーブ管理
+,,,216,savedata.createdAt,はじめた日
+,,,217,savedata.updatedAt,最終更新
+,,,218,savedata.runs,挑戦回数
+,,,219,savedata.clears,完走回数
+,,,220,savedata.crowns,クラウン累計
+,,,221,savedata.runSave,挑戦中のラン
+,,,222,savedata.reset,初期化
+,,,223,savedata.resetConfirm,進行データを全部消します。よろしいですか？
+,,,224,credits.heading,クレジット
+,,,225,credits.section.font,フォント
+,,,226,credits.section.sound,音
+,,,227,credits.section.art,絵
+,,,228,credits.section.program,プログラム
+,,,229,difficulty.heading,難易度
+,,,230,difficulty.note,スターパレットの星をどう有効にして始めるか。
+,,,231,difficulty.easy,イージー
+,,,232,difficulty.easy.desc,有利な星を有効にして始める
+,,,233,difficulty.normal,ノーマル
+,,,234,difficulty.normal.desc,星は全部オフ
+,,,235,difficulty.hard,ハード
+,,,236,difficulty.hard.desc,不利な星を有効にして始める (変動値マイナス)
+,,,237,difficulty.hint,あとからスターパレットで自由に変えられます
+,,,238,menu.records,挑戦 {t} 回 / 完走 {c} 回
+,,,239,menu.bestDelta,ベスト変動値 {n}
+,,,240,menu.noRecord,まだ挑戦していない
+,,,241,profile.wings,羽
+,,,242,book.others,やり込み
+,,,243,book.rules,本のルール
+,,,244,book.threshold,本の要求 {n} 以上で開く
+,,,245,book.continue,つづきから
+,,,246,book.restart,はじめから
+,,,247,book.restartConfirm,挑戦中のランを破棄して、はじめからにしますか？ (戦績には数えません)
+,,,248,book.skits,スキット
+,,,249,book.skitLocked,？？？
+,,,250,book.misfortunes,見た不利イベント
+,,,251,book.record.tries,挑戦 {n}
+,,,252,book.record.normal,ノーマル {n}
+,,,253,book.record.happy,ハッピー {n}
+,,,254,book.record.lose,敗北 {n}
+,,,255,star.heading,スターパレット
+,,,256,star.delta,変動値
+,,,257,star.active,有効な星 {n}
+,,,258,star.preset.easy,イージー
+,,,259,star.preset.normal,ノーマル
+,,,260,star.preset.hard,ハード
+,,,261,star.presetConfirm,いまの星を全部捨てて {name} を適用しますか？
+,,,262,star.reset,全部オフ
+,,,263,star.resetConfirm,有効な星を全部オフにしますか？
+,,,264,star.detailEmpty,星をクリックすると詳細が出ます
+,,,265,star.kind.origin,原点
+,,,266,star.kind.node,星
+,,,267,star.kind.gate,ゲート
+,,,268,star.turnOn,有効にする
+,,,269,star.turnOff,無効にする
+,,,270,star.state.active,有効
+,,,271,star.state.avail,有効にできる (道もいっしょに)
+,,,272,star.state.locked,道がつながっていない
+,,,273,star.gate.open,開いている
+,,,274,star.gate.closed,閉じている
+,,,275,gate.clearAny,本を 1 冊制覇する
+,,,276,gate.happyAny,ハッピーエンドを 1 回
+,,,277,gate.playedAny,1 回挑戦する
+,,,278,gate.crowns,クラウン累計 {n}
+,,,279,gate.clearDelta,変動値 {n} 以下で制覇
+,,,280,intermission.next,つぎの章
+,,,281,intermission.shop,おかいもの
+,,,282,intermission.rerolls,ひきなおし {n} 回
+,,,283,intermission.life,ライフ
+,,,284,intermission.chapterCleared,{name} クリア
+,,,285,intermission.abandon,あきらめる
+,,,286,intermission.abandonConfirm,ランを破棄しますか？ (戦績には数えません)
+,,,287,intermission.extraNote,本の要求を満たした！ しゅっぱつすると Extra Chapter へ
+,,,288,intermission.invHint,ドラッグで並べ替え / アイテムはクリックで使う
+,,,289,result.chapters,到達 {n} / {m} 章
+,,,290,result.harshness,過酷さ {n}
+,,,291,result.stats,ターン {t} / 撃破 {k} / 逃走 {f}
+,,,292,result.delta,変動値
+,,,293,result.crowns,クラウン +{n}
+,,,294,result.best,ベスト更新!
+,,,295,result.noNodes,有効な星なし
+,,,296,result.replaySkit,スキットをもう一度
+,,,297,result.seed,seed {n}
+,,,298,reason.notSelectable,そのマスは選べない
+,,,299,reason.emptyCell,空のマス
+,,,300,reason.notTakeable,もらえないパネル
+,,,301,reason.notDumpable,すてられないパネル
+,,,302,reason.notEnemy,敵ではない
+,,,303,reason.notEvent,イベントではない
+,,,304,reason.unknownChoice,その選択肢はない
+,,,305,reason.notChapterClear,とびらではない
+,,,306,reason.concealed,こんらん中は並べ替えられない
+,,,307,reason.overlap,重なっている
+,,,308,reason.outOfSlots,スロットからはみ出す
+,,,309,reason.missingEntity,全部並べてから
+,,,310,reason.unknownEntity,そんな実体はない
+,,,311,reason.alreadyOwned,もう持っている
+,,,312,reason.unknownSlot,その枠はない
+,,,313,reason.arrangementRequired,並べ方を決めてから
+,,,314,reason.duplicateEntity,同じ実体が 2 回ある
+,,,315,reason.noState,ランがない

@@ -6,7 +6,19 @@ import { registry } from "@core/effects/index.js";
 
 describe("処理順", () => {
   it("レジストリは family の並びが固定で、key が重複しない", () => {
-    expect(registry.families).toEqual(["status", "costume", "bookRule", "passive", "relic", "star", "item", "ability", "enemyAction", "eventEffect"]);
+    expect(registry.families).toEqual([
+      "status",
+      "costume",
+      "bookRule",
+      "passive",
+      "relic",
+      "star",
+      "item",
+      "ability",
+      "enemyAction",
+      "eventEffect",
+      "choiceCondition",
+    ]);
     const keys = registry.all.map((m) => `${m.family}.${m.key}`);
     expect(new Set(keys).size).toBe(keys.length);
   });
@@ -34,13 +46,20 @@ describe("処理順", () => {
     expect(names).toEqual(["standard.statusTick", "status.poison"]);
   });
 
-  it("player.strike.after: passive.drain (300) → passive.poison (400) → standard.weaponWear (500)", () => {
+  it("player.strike.after: status.focus (50) → passive.drain (300) → passive.poison (400) → relic.lethalScythe (450) → standard.weaponWear (500)", () => {
     const s = newRun({ characterId: 1, bookId: 1, seed: 1 });
     s.inventory.entities = [
       { uid: s.uidNext++, kind: "equipment", defId: 1004, pos: 0, durability: 2, active: true, memo: {} }, // poison
       { uid: s.uidNext++, kind: "equipment", defId: 1006, pos: 2, durability: 2, active: true, memo: {} }, // drain
     ];
+    s.player.statuses.push({ key: "focus", value: 1 });
     const names = resolvedOrder(s, "player.strike.after").map((h) => h.name);
-    expect(names).toEqual(["passive.drain", "passive.poison", "standard.weaponWear"]);
+    expect(names).toEqual(["status.focus", "passive.drain", "passive.poison", "relic.lethalScythe", "standard.weaponWear"]);
+  });
+
+  it("enemy.killed: bookRule.statusOnJustLethal (300) → standard.justLethal (500)", () => {
+    const s = newRun({ characterId: 1, bookId: 1, seed: 1 });
+    const names = resolvedOrder(s, "enemy.killed").map((h) => `${h.name}@${h.order}`);
+    expect(names).toEqual(["bookRule.statusOnJustLethal@300", "standard.justLethal@500"]);
   });
 });

@@ -4,7 +4,7 @@ export default [
     "id": 3001,
     "characterId": 1,
     "name": "ライトボール",
-    "description": "貫通 3 ダメージ。アイテムか装備を使い切ると再使用可能。",
+    "description": "3 ダメージ (ブロック無視)。アイテムか装備を使い切ると再使用可能。",
     "icon": "comet",
     "type": "attack",
     "values": [
@@ -32,6 +32,24 @@ export default [
     "size": 2,
     "rechargeType": "damageTaken",
     "rechargeValue": 10,
+    "locked": false
+  },
+  {
+    "id": 3011,
+    "characterId": 1,
+    "name": "クイックムーブ",
+    "description": "かいひ 1 を得る (敵の次の通常攻撃を 1 回無効化)。敵を 3 体倒すと再使用可能。",
+    "icon": "feather",
+    "type": "selfStatus",
+    "values": [
+      9,
+      1
+    ],
+    "cost": 2,
+    "price": 4,
+    "size": 2,
+    "rechargeType": "kill",
+    "rechargeValue": 3,
     "locked": false
   }
 ];

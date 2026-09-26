@@ -23,7 +23,9 @@ export const TABLES = [
       "title:string",
       "startSlots:integer",
       "maxSlots:integer",
-      "shopSlots:integer",
+      "shopOtherSlots:integer",
+      "shopRelicSlots:integer",
+      "shopRareSlots:integer",
       "rerollPrice:integer",
       "harshnessWeightMisfortune:integer",
       "harshnessWeightStatus:integer",
@@ -41,6 +43,7 @@ export const TABLES = [
       "hp:integer",
       "power:integer",
       "coins:integer",
+      "wings:boolean",
       "imageId:integer",
       "bgmId:string",
       "order:integer",
@@ -50,6 +53,7 @@ export const TABLES = [
       "startEquipmentIds:intarray",
       "startItemIds:intarray",
       "startAbilityIds:intarray",
+      "startRelicIds:intarray",
     ],
   },
   {
@@ -116,6 +120,7 @@ export const TABLES = [
       "icon:string",
       "reward:integer",
       "hp:integer",
+      "shield:integer",
     ],
   },
   {
@@ -245,7 +250,14 @@ export const TABLES = [
   },
   {
     name: "eventChoices",
-    columns: [...EDITION_COLUMNS, "id:integer", "label:string", "resultText:string", { list: "effects", fields: ["type:string", "value:integer"] }],
+    columns: [
+      ...EDITION_COLUMNS,
+      "id:integer",
+      "label:string",
+      "resultText:string",
+      { obj: "condition", fields: ["type:string", "values:intarray"] },
+      { list: "effects", fields: ["type:string", "value:integer", "value2:integer"] },
+    ],
   },
   {
     name: "starNodes",

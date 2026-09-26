@@ -15,13 +15,16 @@ export function occupancy(state, slotCount, { exclude = [] } = {}) {
 
 // size マスが連続で空いている最左の pos。無ければ -1
 export function findFreePos(state, size, slotCount, opts) {
-  const cells = occupancy(state, slotCount, opts);
-  for (let pos = 0; pos + size <= slotCount; pos++) {
-    let free = true;
-    for (let i = pos; i < pos + size; i++) if (cells[i] != null) free = false;
-    if (free) return pos;
-  }
+  for (let pos = 0; pos + size <= slotCount; pos++) if (isFreeAt(state, pos, size, slotCount, opts)) return pos;
   return -1;
+}
+
+// pos から size マスが空いているか
+export function isFreeAt(state, pos, size, slotCount, opts) {
+  if (!(Number.isInteger(pos) && pos >= 0 && pos + size <= slotCount)) return false;
+  const cells = occupancy(state, slotCount, opts);
+  for (let i = pos; i < pos + size; i++) if (cells[i] != null) return false;
+  return true;
 }
 
 export function findEntity(state, uid) {

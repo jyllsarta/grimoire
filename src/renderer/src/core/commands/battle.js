@@ -26,6 +26,8 @@ export const commands = {
     phases: ["battle"],
     step: "select",
     run: (ctx) => {
+      const perm = ctx.permission("canFlee");
+      if (!perm.ok) return { ok: false, reason: perm.reason };
       ctx.state.battle.step = "flee.command";
       ctx.emit("step", { from: "select", to: "flee.command" });
       return { ok: true };

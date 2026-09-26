@@ -61,6 +61,8 @@
 | confusion | bad | stack | onApply で `inventory.entities` の pos を rng でシャッフル (再付与でまたシャッフル) + `concealed = true` + `memo["status.confusion"].pendingDeactivate = true`。付与後最初の `turn.start` で 1 回だけ全装備を OFF (予約を消す)。消滅で `concealed = false` (位置はそのまま)。混乱中: 全部 ??? 表示 (ON/OFF 状態とタイルの幅は見える)、??? のまま使用・ON/OFF は可 (攻撃力やブロック値の変化がヒントになる)、獲得した物も ???、整理 (D&D) 不可、個体説明も出さない。隣接効果もシャッフル後の位置で効く |
 | power | good | permanent | 派生 `attackPower` に +value |
 | abilityDamage | good | permanent | アビリティ由来ダメージに +value |
+| evade (かいひ) | good | permanent | 敵アクション `attack` の 1 発を無効化する (`enemy.attack.before` で 1 スタック消費して `negated`)。1 ターンに複数回攻撃されたら 2 発目以降は被弾。無効化された攻撃は防具摩耗・パリィ・眠り解除に関わらない。減衰しない (章のあいだ残る) |
+| focus (こうちょう) | good | permanent | 次の 1 回の通常攻撃の攻撃力 +values[0] (2) × スタック。`player.strike.after` (50) で全部消費 |
 
 新しい良性ステートは statuses に行を足し、モジュールを 1 つ書く。敵専用ステート (side=enemy) も同じ仕組みに乗る (例: 時止め = 敵の行動をスキップする permission、恒久攻撃力ダウン = duration permanent の enemyAttack 修正)。v1 のマスタには無いが、構造は最初から対応する。
 
@@ -73,12 +75,13 @@
 - Lv1 と Lv2 の敵は同じステート key を付与するが、敵としては別の行 (見た目も行動も違ってよい)
 - 付与する敵: `enemies.kind = characterUnique` の行 (characterId = ヒロイン、slot 1..4 = 固有1 Lv1 / 固有1 Lv2 / 固有2 Lv1 / 固有2 Lv2)。章の enemyIds に書くのは `enemies.kind = placeholder` の 4 行 (slot 1..4)。`chapter.build` の標準処理が挑戦中 character の同 slot に置き換える。該当が無ければマスタ不整合として実行時に例外 (フォールバックしない)
 - 敵アクションの書き方: `actions[i].type` に固有バステの key、value にターン数
+- デスサイズちゃん (11): `ds_crystal` 結晶化 = 許可 `canFlee` 不許可 (にげる ボタンにテクスチャ)。`ds_fever` 体温上昇 = onApply で衣装を full にする (過酷さは statusHits で数え済みなので crossBreaks は増やさない)、許可 `canRepairCostume` 不許可、切れても衣装は full のまま
 
 ## 衣装
 
 - オートマトン: `normal → half → full → full` (クロスブレイク)、`special1 → normal`。遷移先は statuses.next 列。衣装が実際に変わったときだけ過酷さ (`crossBreaks`) を数える (full → full は数えない)
 - 付随効果は costume 行のモジュールが登録する (half: attackPower -1 / full: attackPower -1 と enemyAttack +1 / special1: turn 1 の enemyAttack -4)。unique 中はマスク (03 の派生値計算が `player.unique` を見て costume の寄与を捨てる)
-- `wearCostume` アイテムで任意に着替え、`repairCostume` で half/full → normal
+- `wearCostume` アイテムで任意に着替え、`repairCostume` (未移植) で half/full → normal。修復は許可 `canRepairCostume` を通す (体温上昇中は不可)。固有バステの onApply が衣装を変えるときは `setCostume(key, "unique")` (マスク中なので表示は固有バステの SD、切れたら変えた衣装が現れる)
 - 章クリアで normal に戻る (特殊衣装も剥がれる)
 - SD の重ね順: 羽 → 衣装レイヤー (unique なら `unique_<key>`、そうでなければ `costume_<costume>`) → 表情 → common の重ね (statuses.order 昇順)。毒中の表情固定 (げっそり) は毒モジュールの text ヒントで app が判断
 
@@ -93,7 +96,8 @@
 - `counters.harshness.statusHits`: `applyStatus` で player 側に polarity=bad が実際に付与された回数 (スキップは数えない)。重ね掛けも 1 回ずつ、固有バステも含む
 - `counters.harshness.crossBreaks`: クロスブレイクで衣装状態が実際に変わった回数
 - `counters.harshness.misfortunes`: `event.resolved` で misfortune のイベントを再生した回数
-- 判定は派生値 `harshnessScore` = misfortunes × W1 + (statusHits + crossBreaks) × W2 (W は config) と `books.harshnessThreshold`。インゲームに「本の要求」メーターとして常時表示
+- `counters.harshness.bonus`: イベント効果 `harshness` の直接加算 (重みを掛けない)
+- 判定は派生値 `harshnessScore` = misfortunes × W1 + (statusHits + crossBreaks) × W2 + bonus (W は config) と `books.harshnessThreshold`。インゲームに「本の要求」メーターとして常時表示
 
 ## 表示の規則
 

@@ -1,4 +1,5 @@
 // 敵アクション attack: 派生 enemyAttack と 派生 blockValue で 1 発。弾ごとにブロックをフル適用。
+// 撃つ直前にステップ enemy.attack.before を発火し、negated にされた 1 発は無かったことになる (回避)。
 // パリィ判定のために turnMemo に enemyAttacked / attacksBlocked / attackPassed を残す (enemy.act.after の標準処理 parry が読む)
 import { defineEffect } from "../define.js";
 
@@ -9,6 +10,12 @@ export default defineEffect({
   text: { shape: "attack" },
   use: (ctx, src, action) => {
     const b = ctx.state.battle;
+    const payload = { action, negated: false };
+    ctx.fire("enemy.attack.before", payload);
+    if (payload.negated) {
+      ctx.emit("enemyAttackNegated", { action });
+      return;
+    }
     const dmg = ctx.derive("enemyAttack", { action });
     const flags = ctx.derive("enemyStrikeFlags");
     const pierce = flags.includes("pierce");

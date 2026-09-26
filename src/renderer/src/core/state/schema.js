@@ -14,7 +14,7 @@ import { entitySize, tableOfKind } from "../domain/entity.js";
 
 export { entitySize, tableOfKind };
 
-export const SCHEMA_VERSION = 1;
+export const SCHEMA_VERSION = 2;
 
 export const ENTITY_KINDS = ["equipment", "item", "ability"];
 export const PANEL_KINDS = ["enemy", "equipment", "item", "ability", "event", "chapterClear"];
@@ -45,7 +45,7 @@ export function createState({ characterId, bookId, seed, star, difficulty = null
     battle: null,
     shop: null,
     counters: {
-      harshness: { misfortunes: 0, statusHits: 0, crossBreaks: 0 },
+      harshness: { misfortunes: 0, statusHits: 0, crossBreaks: 0, bonus: 0 },
       battles: 0,
       kills: 0,
       turns: 0,
@@ -145,7 +145,11 @@ export function checkInvariants(state) {
   }
   for (const uid of Object.keys(state.board.panels)) {
     const p = state.board.panels[uid];
-    if (p.kind === "enemy" && p.enemy) checkStatusList(p.enemy.statuses, `panels[${uid}].enemy.statuses`, add);
+    if (p.kind === "enemy" && p.enemy) {
+      checkStatusList(p.enemy.statuses, `panels[${uid}].enemy.statuses`, add);
+      if (!(p.enemy.shield >= 0)) add(`panels[${uid}].enemy.shield=${p.enemy.shield} が負`);
+      if (!(p.enemy.block >= 0)) add(`panels[${uid}].enemy.block=${p.enemy.block} が負`);
+    }
   }
 
   // pending / phase

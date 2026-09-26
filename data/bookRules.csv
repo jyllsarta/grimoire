@@ -1,2 +1,2 @@
 _isTrial:integer,_isCien:integer,_isClean:integer,id:integer,bookId:integer,key:string,values:intarray,name:string,description:string,icon:string
-,,,1,1,weaponCostPlus,[1],武器の呪い,武器パネルの回収コスト +1。,kama
+,,,1,1,statusOnJustLethal,"[10,1]",死神の本のルール,ジャストリーサルすると「こうちょう」を得る (次の 1 回のこうげき +2)。,kama

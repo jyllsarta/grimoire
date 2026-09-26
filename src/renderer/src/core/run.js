@@ -27,7 +27,12 @@ export function serialize(state) {
 
 // schemaVersion が古ければ migrations を順に当てる。当てられなければ null (ランを破棄して通知する)
 export const migrations = {
-  // 2: (state) => { ...; return state; },
+  // 2 (M2): 敵のシールド、過酷さの直接加算 (bonus)
+  2: (state) => {
+    for (const p of Object.values(state.board?.panels ?? {})) if (p.enemy && p.enemy.shield == null) p.enemy.shield = 0;
+    if (state.counters?.harshness && state.counters.harshness.bonus == null) state.counters.harshness.bonus = 0;
+    return state;
+  },
 };
 
 export function migrate(state) {

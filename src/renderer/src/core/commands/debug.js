@@ -65,10 +65,9 @@ export const commands = {
   "debug.addRelic": {
     phases: ANY,
     run: (ctx, { defId }) => {
-      master.get("relics", defId);
-      if (ctx.state.relics.some((r) => r.defId === defId)) return { ok: false, reason: "alreadyOwned" };
-      ctx.state.relics.push({ uid: ctx.uid(), defId, memo: {} });
-      return { ok: true };
+      const relic = ctx.gainRelic(defId, { source: { family: "debug", key: "addRelic" } });
+      if (!relic) return { ok: false, reason: "alreadyOwned" };
+      return { ok: true, uid: relic.uid };
     },
   },
 };

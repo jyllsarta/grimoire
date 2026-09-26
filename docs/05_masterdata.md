@@ -29,13 +29,15 @@
 
 ### config (1 行)
 
-`title, startSlots, maxSlots, shopSlots (6), rerollPrice (2), harshnessWeightMisfortune (1), harshnessWeightStatus (1)`
+`title, startSlots, maxSlots, shopOtherSlots (4), shopRelicSlots (1), shopRareSlots (1), rerollPrice (2), harshnessWeightMisfortune (1), harshnessWeightStatus (1)`
+
+- ショップの枠配分 (R3 Q18): 章クリア直後 = その他 shopOtherSlots + レリック shopRelicSlots + レア shopRareSlots (★2 以上保証)。引き直し = その他 shopOtherSlots + レリック (shopRelicSlots + shopRareSlots)。rarity の重み (70/25/5、レア枠 95/5) はコード側の定数 (`core/domain/shop.js`)。不変のグローバルな値はコードで持ってよい
 
 ### characters
 
 登場人物は全部ここ (旧作と同じ命名)。**ヒロイン = 本を持つ character** (books.characterId で引く。xqueens の hasChapter と同じ発想)。オラクルちゃんも同じテーブルの 1 行で、本を持たないだけ。role のような列や oracle 専用の命名・分岐は持たず、立ち絵の表示ロジックも character 共通。
 
-`id, key (string。ステートのキーやスクリプトの参照名に使う), name, asKnownAs, description, hp, power, coins, imageId, bgmId, order, initialEquipmentIds, initialItemIds, initialAbilityIds, startEquipmentIds, startItemIds, startAbilityIds`
+`id, key (string。ステートのキーやスクリプトの参照名に使う), name, asKnownAs, description, hp, power, coins, wings (boolean。羽を持つか。イベントの条件が読む), imageId, bgmId, order, initialEquipmentIds, initialItemIds, initialAbilityIds, startEquipmentIds, startItemIds, startAbilityIds, startRelicIds (固有初期レリック。run.start で所持)`
 
 - initial* は「キャラ固有パネル」(毎章、山札に入る設計図)、start* は「章開始時にインベントリにある」(プロト踏襲)
 - 当面はデスサイズちゃん (id 1) とオラクルちゃん (id 0 案。本なし) のみ
@@ -62,7 +64,7 @@
 
 ### enemies
 
-`id, kind (normal|placeholder|characterUnique), slot (placeholder / characterUnique: 1..4), characterId (characterUnique のみ), name, description, icon, reward, hp`
+`id, kind (normal|placeholder|characterUnique), slot (placeholder / characterUnique: 1..4), characterId (characterUnique のみ), name, description, icon, reward, hp, shield (初期シールド。空 = 0。バトルをまたいで残る)`
 
 - placeholder 行は 4 つ (slot 1..4)。章の enemyIds に書くと挑戦中 character の同 slot の characterUnique に置き換わる
 - ID の予約: placeholder = 1..4、character の固有敵は `characterId × 100 + slot` (人間用の慣習)。Lv1 と Lv2 は別の行なので見た目も行動も違ってよい
@@ -72,7 +74,7 @@
 `_skip, id, enemyId, order, name, actions[i].type, actions[i].value`
 
 - 敵 1 体につき 4 行 (order 1..4、id = 敵 id × 10 + order)、使わない行は `_skip` (tale の約束)
-- `actions[i].type` ∈ enemyAction モジュール key (`attack, block, rest, selfHarm, pierce, blitz, crossBreak`) ∪ statuses.key (kind=common|unique: value = スタック / ターン)。「なにもしない」は `rest` (tale の `sleep`)。`sleep` と書くと statuses.key の眠りの付与になる (モジュール key と statuses.key が重ならないように名前を選ぶ。両方にあるときはモジュールが勝つ)
+- `actions[i].type` ∈ enemyAction モジュール key (`attack, block, shield, rest, selfHarm, pierce, blitz, crossBreak`) ∪ statuses.key (kind=common|unique: value = スタック / ターン)。「なにもしない」は `rest` (tale の `sleep`)。`sleep` と書くと statuses.key の眠りの付与になる (モジュール key と statuses.key が重ならないように名前を選ぶ。両方にあるときはモジュールが勝つ)。`shield [n]` は敵のシールド +n (11)
 
 ### equipments
 
@@ -101,7 +103,7 @@
 ### events / eventChoices
 
 `events: id, kind (normal|misfortune|placeholder), slot (placeholder / ヒロイン固有: 1..2), characterId (-1 = 共通 / ヒロイン id), name, description, icon, cutin (カットイン素材キー), choiceIds, price (幕間で買えるもの)`
-`eventChoices: id, label, resultText, effects[i].type, effects[i].value`
+`eventChoices: id, label, resultText, condition.type, condition.values (条件付き選択肢。空なら常に選べる), effects[i].type, effects[i].value, effects[i].value2 (status の量。他は無視)`
 
 - 置き方は 3 系統: (a) 章の eventIds に直接 (落とし穴、回復の泉など章の設計) (b) ヒロイン固有のドジ・不運は placeholder (slot 1..2) を章に置き、chapter.build で挑戦中ヒロインの同 slot に置き換える (c) 呪われ体質のものはスターパレットの `misfortuneCandidate` ノードで幕間の抽選候補に入り、買うと ownedPanels (kind=event) として毎章の山札に入る
 - 不利イベントの再生 (選択肢を選んで結果を適用) で `counters.harshness.misfortunes += 1`。覗いて戻るのは無料。1 択もあり
@@ -109,7 +111,7 @@
 
 ### starNodes / starPresets
 
-`starNodes`: プロト踏襲 (`id, characterId, kind (origin|node|gate), x, y, fromIds, effectType, values, delta, gateType, gateValue, name, description`)。name / description は本番では手書き。効果 type の追加: `misfortuneCandidate [eventId]` (幕間の抽選候補に不利イベントを混ぜる)。ゲート type の追加: `happyAny` (ハッピーエンド 1 回)
+`starNodes`: プロト踏襲 (`id, characterId, kind (origin|node|gate), x, y, fromIds, effectType, values, delta, gateType, gateValue, name, description`)。name / description は本番では手書き。効果 type の追加: `misfortuneCandidate [eventId]` (幕間の抽選候補に不利イベントを混ぜる)、`chapterEnemy [enemyId, 章番号]` (tale の layerEnemy の改名。章番号は chapterIds の 1 始まり、Extra は length + 1)。ゲート type の追加: `happyAny` (ハッピーエンド 1 回)。到達判定・連鎖無効化・ゲート判定・プリセット適用のコアは `core/star/palette.js` (純関数。画面は M3)
 `starPresets`: `id, characterId, difficulty (easy|normal|hard), nodeIds, name, description` — 難易度ボタンで有効化するノード集合 (R1 Q28)
 
 ### skits / skitLines / characterScripts
@@ -126,5 +128,6 @@
 
 ## 検証 (selftest がやること)
 
-- id 重複、参照切れ (全 *Ids)、type ∈ レジストリ、values の個数・値域・refs、statuses の kind/duration/next、placeholder の解決可能性 (全ヒロイン × 全 slot)、開始インベントリがマスに入るか、starNodes のグラフ整合、systemTexts の網羅、chapters の bossEnemyId が placeholder でないこと (ボスは固定)
+- id 重複、参照切れ (全 *Ids)、type ∈ レジストリ、values の個数・値域・refs、statuses の kind/duration/next、placeholder の解決可能性 (全ヒロイン × 全 slot)、開始インベントリがマスに入るか、starNodes のグラフ整合 (origin 以外は fromIds が要る)、systemTexts の網羅 (`recharge.<type>` も)、chapters の bossEnemyId が placeholder でないこと (ボスは固定)、eventChoices の condition ∈ choiceCondition
+- ボット: 貪欲法 (`test/harness/auto_play.js`) で N ラン回し、ending の内訳と **到達章 (chaptersCleared) の分布・平均** を出す (R3 Q4)。クリアは必須ではない。「ちょうどよい」ラインが決まったら、そのレベル感を目指す自動調整を検討する (ロードマップ)
 - 通らなくても **起動はする** (マスタ入力の途中で部分的に動作確認したいため)。import.js と selftest は全部の問題を console に警告として並べ、dev ビルドはインスペクタに警告バッジを出す。CI (npm test) では失敗扱い。実行時に壊れた行へ実際に触れたら (参照切れなど) フォールバックせずそこで例外になる (AGENTS.md の方針)

@@ -6,5 +6,19 @@ export default [
     "name": "NekoSpoon",
     "url": "",
     "order": 1
+  },
+  {
+    "id": 2,
+    "section": "art",
+    "name": "jyllsarta.net",
+    "url": "",
+    "order": 2
+  },
+  {
+    "id": 3,
+    "section": "program",
+    "name": "jyllsarta.net",
+    "url": "",
+    "order": 3
   }
 ];

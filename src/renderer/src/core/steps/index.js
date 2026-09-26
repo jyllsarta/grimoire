@@ -2,6 +2,7 @@
 // ステップの一覧 (03 の 2 つの表と同じ並び)。ここは登録だけ。中身は各ファイル。
 // ============================================================
 import runStart from "./run/run_start.js";
+import relicGained from "./run/relic_gained.js";
 import chapterBuild from "./chapter/chapter_build.js";
 import chapterStart from "./chapter/chapter_start.js";
 import panelTaken from "./chapter/panel_taken.js";
@@ -17,6 +18,8 @@ import actionAbility from "./action/action_ability.js";
 import actionEquipToggle from "./action/action_equip_toggle.js";
 import playerDamaged from "./damage/player_damaged.js";
 import enemyDamaged from "./damage/enemy_damaged.js";
+import enemyKilled from "./damage/enemy_killed.js";
+import enemyAttackBefore from "./battle/enemy_attack_before.js";
 import runEnd from "./run/run_end.js";
 
 import battleStart from "./battle/battle_start.js";
@@ -44,6 +47,7 @@ import battleEnd from "./battle/battle_end.js";
 export const STEPS = [
   // ラン・章スコープ
   runStart,
+  relicGained,
   chapterBuild,
   chapterStart,
   panelTaken,
@@ -59,6 +63,8 @@ export const STEPS = [
   actionEquipToggle,
   playerDamaged,
   enemyDamaged,
+  enemyKilled,
+  enemyAttackBefore,
   runEnd,
   // バトル (battle.step の値)
   battleStart,

@@ -7,6 +7,7 @@ import { list } from "../lists/index.js";
 export function createEnemyState(ctx, defId) {
   return {
     hp: derive("enemyMaxHp", ctx, { defId }),
+    shield: master.get("enemies", defId).shield ?? 0,
     routineIndex: 0,
     stunned: false,
     block: 0,

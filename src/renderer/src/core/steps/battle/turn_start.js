@@ -1,4 +1,4 @@
-// turn.start: ターンの先頭。予約 (delayed) を全部発動して空にする (turn ≥ 2)
+// turn.start: ターンの先頭。予約 (delayed) を全部発動して空にする (turn ≥ 2)。予約の中身は積んだモジュールの fire (R3 Q6)
 import { defineStep, std } from "../_define.js";
 import { registry } from "../../effects/index.js";
 
@@ -15,9 +15,10 @@ export default defineStep({
       const delayed = b.delayed;
       b.delayed = [];
       for (const d of delayed) {
-        const mod = registry.find("ability", d.key);
+        const mod = registry.find(d.source?.family ?? "ability", d.key);
+        if (!mod?.fire) throw new Error(`battle.delayed: ${d.source?.family ?? "ability"}.${d.key} に fire が無い`);
         ctx.emit("delayedFire", { key: d.key });
-        mod?.fire?.(ctx, d);
+        mod.fire(ctx, d);
       }
     }),
   ],

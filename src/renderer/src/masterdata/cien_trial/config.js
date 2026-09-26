@@ -3,7 +3,9 @@ export default {
   "title": "オラクルちゃんと呪いの本",
   "startSlots": 6,
   "maxSlots": 12,
-  "shopSlots": 6,
+  "shopOtherSlots": 4,
+  "shopRelicSlots": 1,
+  "shopRareSlots": 1,
   "rerollPrice": 2,
   "harshnessWeightMisfortune": 1,
   "harshnessWeightStatus": 1

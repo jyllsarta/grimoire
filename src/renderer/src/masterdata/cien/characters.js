@@ -9,6 +9,7 @@ export default [
     "hp": 20,
     "power": 2,
     "coins": 2,
+    "wings": false,
     "imageId": 0,
     "bgmId": "chara0",
     "order": 0,
@@ -17,38 +18,41 @@ export default [
     "initialAbilityIds": [],
     "startEquipmentIds": [],
     "startItemIds": [],
-    "startAbilityIds": []
+    "startAbilityIds": [],
+    "startRelicIds": []
   },
   {
     "id": 1,
     "key": "deathscythe",
     "name": "デスサイズちゃん",
     "asKnownAs": "呪われた死神",
-    "description": "本に呪われてしまった (仮データ。素材はシンティラを流用)。",
+    "description": "敬語で寡黙、警戒心が強い。一度戦い出すとトリガーハッピー気味に鎌を振る。搦め手・罠・悪意に非常に弱い。",
     "hp": 30,
     "power": 3,
     "coins": 2,
+    "wings": true,
     "imageId": 1,
     "bgmId": "chara1",
     "order": 1,
     "initialEquipmentIds": [
+      1011,
+      1011,
       1001,
-      1001,
-      1002,
-      1002,
-      1003
+      1002
     ],
     "initialItemIds": [
-      2001,
+      2011,
+      2011,
       2001
     ],
     "initialAbilityIds": [
-      3001
+      3011
     ],
     "startEquipmentIds": [],
     "startItemIds": [],
-    "startAbilityIds": [
-      3001
+    "startAbilityIds": [],
+    "startRelicIds": [
+      11
     ]
   }
 ];
