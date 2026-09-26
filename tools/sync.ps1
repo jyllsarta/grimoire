@@ -1,4 +1,4 @@
-# =====================================================================
+﻿# =====================================================================
 # シート同期のワンボタンスクリプト (Windows PowerShell)。tale から移植
 #
 #   .\tools\sync.ps1            … 認証がなければブラウザで認証 → シート取得 → masterdata 生成 → selftest
@@ -8,6 +8,7 @@
 #   .\tools\sync.ps1 -Relogin   … 認証をやりなおす (スコープ不足 / リフレッシュトークン失効 (7 日) のとき)
 #                                  ※ 認証後にシート取り込みを走らせるので、未 push の CSV 編集は先に stash
 #
+# ※ このファイルは UTF-8 BOM 付きで保存すること (Windows PowerShell 5.1 は BOM 無しを Shift-JIS として読み、日本語コメントが引用符を壊す)
 # 認証は gcloud の Application Default Credentials。spreadsheets スコープが要るので必ずこのスクリプト経由で認証すること。
 # gcloud 内蔵の OAuth クライアントは sheets スコープで弾かれるため、自前の OAuth クライアント ID (デスクトップアプリ) の
 # JSON を tools/client_secret.json に置く (作り方は librarian/tale/README.md の「データ入稿ワークフロー」)。

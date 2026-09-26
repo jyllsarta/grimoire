@@ -2,6 +2,7 @@
   "permissions": {
     "allow": [
       "Bash(node tools/*)",
+      "Bash(python tools/*)",
       "Bash(node --check *)",
       "Bash(npm test*)",
       "Bash(npm run test*)",
